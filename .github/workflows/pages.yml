@@ -1,4 +1,4 @@
-﻿name: Deploy DevShed Pages
+name: Deploy DevShed Pages
 
 on:
   push:
@@ -42,4 +42,4 @@ jobs:
     needs: build
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
