@@ -49,6 +49,11 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   $('backBtn').classList.toggle('show', id!=='screen-home');
+  if ($('pdfLede')) {
+    $('pdfLede').textContent = (id !== 'screen-home' && state.tool)
+      ? state.tool.desc
+      : 'Merge, split, rotate, number, and rearrange PDFs entirely in your browser — files never leave your device.';
+  }
 }
 
 // ---------- Home ----------

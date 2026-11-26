@@ -600,7 +600,7 @@ function cellNode(text, className) {
 function actionButton(label, handler) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "btn small";
+  button.className = "ds-btn small";
   button.textContent = label;
   button.addEventListener("click", () => handler(button));
   return button;
@@ -756,25 +756,12 @@ async function filesFromDataTransfer(transfer) {
 }
 
 // ---------------------------------------------------------------------------
-// Theme
+// Theme (delegated to shared DevShedTheme)
 // ---------------------------------------------------------------------------
 
 const themeToggle = document.getElementById("theme-toggle");
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  themeToggle.textContent = theme === "dark" ? "Light" : "Dark";
-  themeToggle.setAttribute("aria-pressed", String(theme === "light"));
-  try {
-    localStorage.setItem("theme", theme);
-  } catch (error) {
-    // Private browsing can refuse storage; the toggle still works for this visit.
-  }
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    if (window.DevShedTheme) window.DevShedTheme.toggleTheme();
+  });
 }
-
-applyTheme(document.documentElement.getAttribute("data-theme") || "dark");
-
-themeToggle.addEventListener("click", () => {
-  const current = document.documentElement.getAttribute("data-theme");
-  applyTheme(current === "dark" ? "light" : "dark");
-});

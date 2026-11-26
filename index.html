@@ -1,142 +1,152 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <script>try{document.querySelector('meta[name="color-scheme"]').content=localStorage.getItem("devshed-color-scheme")??"light dark";}catch(e){}</script>
   <title>DevShed — 6-in-1 Developer &amp; Ops Workbench</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%B0%3C/text%3E%3C/svg%3E" />
-  <script>
-    (function () {
-      try {
-        var saved = localStorage.getItem("devshed-theme");
-        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        document.documentElement.setAttribute("data-theme", saved || (prefersDark ? "dark" : "light"));
-      } catch (e) {}
-    })();
-  </script>
+  <link rel="stylesheet" href="./shared/devshed-theme.css" />
+  <script src="./shared/devshed-theme.js"></script>
   <style>
-    :root,
-    html[data-theme="dark"] {
-      color-scheme: dark;
-      --bg: #0b0f17;
-      --surface: #121826;
-      --surface-hover: #1a2235;
-      --border: #243047;
-      --text: #e6edf7;
-      --muted: #93a4bf;
-      --accent: #3b82f6;
-      --accent-soft: rgba(59, 130, 246, 0.14);
-    }
-    html[data-theme="light"] {
-      color-scheme: light;
-      --bg: #f6f8fb;
-      --surface: #ffffff;
-      --surface-hover: #f0f4fa;
-      --border: #dbe2ee;
-      --text: #0f172a;
-      --muted: #475569;
-      --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.1);
-    }
-    * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
     }
-    header {
-      padding: 0.85rem 1.25rem;
-      border-bottom: 1px solid var(--border);
+
+    .shell-header {
+      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid var(--c-rule);
+      background: var(--c-panel);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      background: var(--surface);
+      gap: 1rem;
       flex-shrink: 0;
     }
-    .brand { display: flex; align-items: baseline; gap: 0.65rem; }
-    .brand h1 { margin: 0; font-size: 1.2rem; letter-spacing: -0.02em; }
-    .brand span { color: var(--muted); font-size: 0.88rem; }
-    .nav-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-    .tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-    .tab, .theme-btn {
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text);
-      padding: 0.38rem 0.72rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.84rem;
-      font-weight: 500;
-    }
-    .tab:hover, .theme-btn:hover { background: var(--surface-hover); }
-    .tab.active {
-      background: var(--accent-soft);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .theme-btn { color: var(--muted); }
-    main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-    #launcher {
-      max-width: 1120px;
-      width: 100%;
-      margin: 2.25rem auto;
-      padding: 0 1.25rem 2.5rem;
-    }
-    #launcher h2 { margin: 0 0 0.5rem; font-size: 1.7rem; }
-    #launcher p.lead { margin: 0 0 1.85rem; color: var(--muted); }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.15rem;
-    }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.35rem;
+
+    .brand {
       display: flex;
       flex-direction: column;
-      gap: 0.7rem;
-      transition: border-color 0.15s ease, transform 0.15s ease;
+      gap: 0.1rem;
+      flex-shrink: 0;
     }
-    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .badge {
-      display: inline-block;
-      width: fit-content;
-      font-size: 0.75rem;
-      padding: 0.2rem 0.55rem;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-weight: 600;
+    .brand h1 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
-    .card h3 { margin: 0; font-size: 1.12rem; }
-    .card p { margin: 0; color: var(--muted); font-size: 0.9rem; line-height: 1.5; flex: 1; }
-    .actions { display: flex; gap: 0.55rem; margin-top: 0.4rem; flex-wrap: wrap; }
-    .btn {
-      padding: 0.5rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      border: 1px solid var(--border);
-      color: var(--text);
+    .brand span {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--c-mute);
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+      overflow-x: auto;
+      scroll-snap-type: inline proximity;
+      scrollbar-width: none;
+      max-width: 100%;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      position: relative;
+      flex: none;
+      scroll-snap-align: start;
+      border: 0;
       background: transparent;
+      color: var(--c-mute);
+      padding: 0.48rem 0.72rem;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: color 140ms var(--ease-cx);
     }
-    .btn-primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
+    .tab:hover { color: var(--c-body); }
+    .tab.active {
+      color: var(--c-signal);
     }
-    .btn:hover { opacity: 0.92; }
+    .tab.active::after {
+      content: "";
+      position: absolute;
+      inset: auto 0.45rem 0;
+      border-block-end: 2px solid var(--c-signal);
+    }
+
+    .theme-btn {
+      flex-shrink: 0;
+      border: 1px solid var(--c-rule-strong);
+      background: var(--c-ground);
+      color: var(--c-body);
+      padding: 0.38rem 0.7rem;
+      border-radius: var(--ds-radius-sm);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .theme-btn:hover { border-color: var(--c-body); }
+
+    main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+    .launcher-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1rem;
+    }
+
+    .launcher-card {
+      background: var(--c-panel);
+      border: 1px solid var(--c-rule);
+      border-radius: var(--ds-radius);
+      padding: 1.3rem 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      transition: border-color 140ms var(--ease-cx), transform 140ms var(--ease-cx);
+    }
+    .launcher-card:hover {
+      border-color: var(--c-signal);
+      transform: translateY(-1px);
+    }
+    .launcher-card h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+    .launcher-card p.desc {
+      margin: 0;
+      color: var(--c-mute);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      flex: 1;
+    }
+
     #workspace {
       display: none;
       flex: 1;
@@ -144,118 +154,139 @@
       min-height: 0;
     }
     #workspace.open { display: flex; }
-    .toolbar {
-      padding: 0.45rem 1.25rem;
-      border-bottom: 1px solid var(--border);
+
+    .workspace-bar {
+      padding: 0.45rem 1.5rem;
+      border-bottom: 1px solid var(--c-rule);
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 0.75rem;
-      font-size: 0.85rem;
-      color: var(--muted);
-      background: var(--surface);
+      background: var(--c-ground);
       flex-shrink: 0;
     }
+    .workspace-bar span {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--c-mute);
+    }
+    .workspace-bar .ds-btn { padding: 0.32rem 0.7rem; font-size: 0.72rem; }
+
     iframe {
       flex: 1;
       width: 100%;
       min-height: 0;
       border: 0;
-      background: transparent;
+      background: var(--c-ground);
+    }
+
+    @media (max-width: 720px) {
+      .shell-header { flex-wrap: wrap; padding: 0.65rem 1rem; }
+      .nav-controls { width: 100%; justify-content: space-between; }
+      .workspace-bar { padding: 0.45rem 1rem; }
     }
   </style>
 </head>
 <body>
-  <header>
+  <header class="shell-header">
     <div class="brand">
       <h1>DevShed</h1>
-      <span>6 utilities under one roof</span>
+      <span>6 utilities · srinidevops</span>
     </div>
     <div class="nav-controls">
-      <nav class="tabs" aria-label="Tool switcher">
-        <button class="tab active" data-tool="home">All Tools</button>
-        <button class="tab" data-tool="pdf">PDF Studio</button>
-        <button class="tab" data-tool="doc2md">Doc2MD</button>
-        <button class="tab" data-tool="deploy">Self-Healing Deploy</button>
-        <button class="tab" data-tool="multicloud">Multi-Cloud</button>
-        <button class="tab" data-tool="brainrot">Study Brainrot</button>
-        <button class="tab" data-tool="minecraft">Minecraft GitOps</button>
+      <nav class="tabs" aria-label="DevShed tool navigation">
+        <button type="button" class="tab active" data-tool="home" aria-current="page">00 All</button>
+        <button type="button" class="tab" data-tool="pdf">01 PDF</button>
+        <button type="button" class="tab" data-tool="doc2md">02 Doc2MD</button>
+        <button type="button" class="tab" data-tool="deploy">03 Deploy</button>
+        <button type="button" class="tab" data-tool="multicloud">04 Cloud</button>
+        <button type="button" class="tab" data-tool="brainrot">05 Video</button>
+        <button type="button" class="tab" data-tool="minecraft">06 MC GitOps</button>
       </nav>
-      <button id="theme-toggle" class="theme-btn" type="button" aria-label="Toggle color theme">Theme</button>
+      <button id="theme-toggle" class="theme-btn" type="button" aria-label="Toggle color theme">
+        <span class="theme-opt-light">&#9632; Dark</span>
+        <span class="theme-opt-dark">&#9633; Light</span>
+      </button>
     </div>
   </header>
 
   <main>
-    <section id="launcher">
-      <h2>Choose a tool to run</h2>
-      <p class="lead">Run browser-native tools directly or launch CLI, Docker, and GitOps workbenches from one unified GitHub Pages suite.</p>
-      <div class="grid">
-        <article class="card">
-          <span class="badge">Client-Side PDF</span>
+    <section id="launcher" class="ds-page">
+      <div class="ds-hero">
+        <p class="ds-eyebrow">DevShed Workbench · 06 Tools</p>
+        <h2 class="ds-title">Six utilities under one roof.</h2>
+        <p class="ds-lede">Run browser-native document and deployment tools directly in this tab, or inspect Docker, Python, and GitOps workbenches from one unified suite.</p>
+      </div>
+
+      <div class="launcher-grid">
+        <article class="launcher-card">
+          <p class="ds-eyebrow">01 // Client-Side PDF</p>
           <h3>Browser PDF Tools</h3>
-          <p>Merge, split, rotate, number, and rearrange PDFs entirely in your browser — files never leave your device.</p>
-          <div class="actions">
-            <button class="btn btn-primary" data-launch="pdf">Run Here</button>
-            <a class="btn" href="./browser-pdf-tools/">Open Fullscreen</a>
+          <p class="desc">Merge, split, rotate, number, and rearrange PDFs entirely in your browser — files never leave your device.</p>
+          <div class="ds-actions">
+            <button type="button" class="ds-btn ds-btn-primary" data-launch="pdf">Run Here</button>
+            <a class="ds-btn" href="./browser-pdf-tools/">Fullscreen</a>
           </div>
         </article>
 
-        <article class="card">
-          <span class="badge">Converter + Action</span>
+        <article class="launcher-card">
+          <p class="ds-eyebrow">02 // Converter + Action</p>
           <h3>Doc2MD</h3>
-          <p>Convert HTML, DOCX, XLSX, PPTX, PDF, and images to token-efficient Markdown in the browser or via GitHub Action.</p>
-          <div class="actions">
-            <button class="btn btn-primary" data-launch="doc2md">Run Here</button>
-            <a class="btn" href="./doc2md-action/site/">Open Fullscreen</a>
+          <p class="desc">Convert HTML, DOCX, XLSX, PPTX, PDF, and images to token-efficient Markdown in the browser or via GitHub Action.</p>
+          <div class="ds-actions">
+            <button type="button" class="ds-btn ds-btn-primary" data-launch="doc2md">Run Here</button>
+            <a class="ds-btn" href="./doc2md-action/site/">Fullscreen</a>
           </div>
         </article>
 
-        <article class="card">
-          <span class="badge">SRE / Blue-Green</span>
+        <article class="launcher-card">
+          <p class="ds-eyebrow">03 // SRE / Blue-Green</p>
           <h3>Self-Healing Deployment</h3>
-          <p>Inspect blue/green deployment health checks, release history, and automated rollback events.</p>
-          <div class="actions">
-            <button class="btn btn-primary" data-launch="deploy">Run Here</button>
-            <a class="btn" href="./self-healing-deployment/dashboard/">Open Fullscreen</a>
+          <p class="desc">Inspect blue/green deployment health checks, release history, and automated rollback events.</p>
+          <div class="ds-actions">
+            <button type="button" class="ds-btn ds-btn-primary" data-launch="deploy">Run Here</button>
+            <a class="ds-btn" href="./self-healing-deployment/dashboard/">Fullscreen</a>
           </div>
         </article>
 
-        <article class="card">
-          <span class="badge">Flask + Ansible + Terraform</span>
+        <article class="launcher-card">
+          <p class="ds-eyebrow">04 // Flask + Ansible + Terraform</p>
           <h3>Multi-Cloud Free Tier</h3>
-          <p>Provision and monitor free-tier servers across AWS, GCP, Azure, and Oracle Cloud.</p>
-          <div class="actions">
-            <button class="btn btn-primary" data-launch="multicloud">Open Workbench</button>
-            <a class="btn" href="./panels/multicloud.html">Open Fullscreen</a>
+          <p class="desc">Provision and monitor free-tier servers across AWS, GCP, Azure, and Oracle Cloud.</p>
+          <div class="ds-actions">
+            <button type="button" class="ds-btn ds-btn-primary" data-launch="multicloud">Open Workbench</button>
+            <a class="ds-btn" href="./panels/multicloud.html">Fullscreen</a>
           </div>
         </article>
 
-        <article class="card">
-          <span class="badge">Python + TTS + FFmpeg</span>
+        <article class="launcher-card">
+          <p class="ds-eyebrow">05 // Python + TTS + FFmpeg</p>
           <h3>Study Brainrot Generator</h3>
-          <p>Generate short vertical captioned study videos from Wikipedia topics.</p>
-          <div class="actions">
-            <button class="btn btn-primary" data-launch="brainrot">Open Workbench</button>
-            <a class="btn" href="./panels/brainrot.html">Open Fullscreen</a>
+          <p class="desc">Generate short vertical captioned study videos from Wikipedia topics.</p>
+          <div class="ds-actions">
+            <button type="button" class="ds-btn ds-btn-primary" data-launch="brainrot">Open Workbench</button>
+            <a class="ds-btn" href="./panels/brainrot.html">Fullscreen</a>
           </div>
         </article>
 
-        <article class="card">
-          <span class="badge">GitOps / Game Server</span>
+        <article class="launcher-card">
+          <p class="ds-eyebrow">06 // GitOps / Game Server</p>
           <h3>Minecraft Server GitOps</h3>
-          <p>Manage a 24/7 Minecraft server declaratively through Git config files and automated backups.</p>
-          <div class="actions">
-            <button class="btn btn-primary" data-launch="minecraft">Open Workbench</button>
-            <a class="btn" href="./panels/minecraft.html">Open Fullscreen</a>
+          <p class="desc">Manage a 24/7 Minecraft server declaratively through Git config files and automated backups.</p>
+          <div class="ds-actions">
+            <button type="button" class="ds-btn ds-btn-primary" data-launch="minecraft">Open Workbench</button>
+            <a class="ds-btn" href="./panels/minecraft.html">Fullscreen</a>
           </div>
         </article>
       </div>
     </section>
 
     <section id="workspace" aria-live="polite">
-      <div class="toolbar">
+      <div class="workspace-bar">
         <span id="active-label">Running tool</span>
-        <a id="fullscreen-link" class="btn" href="./" target="_blank" rel="noopener">Open in New Tab ↗</a>
+        <a id="fullscreen-link" class="ds-btn" href="./" target="_blank" rel="noopener">Open Fullscreen ↗</a>
       </div>
       <iframe id="tool-frame" title="Active DevShed Tool"></iframe>
     </section>
@@ -263,12 +294,12 @@
 
   <script>
     const TOOLS = {
-      pdf: { label: "Browser PDF Tools", path: "./browser-pdf-tools/" },
-      doc2md: { label: "Doc2MD Converter", path: "./doc2md-action/site/" },
-      deploy: { label: "Self-Healing Deployment Dashboard", path: "./self-healing-deployment/dashboard/" },
-      multicloud: { label: "Multi-Cloud Free Tier Workbench", path: "./panels/multicloud.html" },
-      brainrot: { label: "Study Brainrot Generator Workbench", path: "./panels/brainrot.html" },
-      minecraft: { label: "Minecraft Server GitOps Workbench", path: "./panels/minecraft.html" }
+      pdf: { label: "01 // Browser PDF Tools", path: "./browser-pdf-tools/" },
+      doc2md: { label: "02 // Doc2MD Converter", path: "./doc2md-action/site/" },
+      deploy: { label: "03 // Self-Healing Deployment Dashboard", path: "./self-healing-deployment/dashboard/" },
+      multicloud: { label: "04 // Multi-Cloud Free Tier Workbench", path: "./panels/multicloud.html" },
+      brainrot: { label: "05 // Study Brainrot Generator Workbench", path: "./panels/brainrot.html" },
+      minecraft: { label: "06 // Minecraft Server GitOps Workbench", path: "./panels/minecraft.html" }
     };
 
     const launcher = document.getElementById("launcher");
@@ -277,32 +308,25 @@
     const activeLabel = document.getElementById("active-label");
     const fullscreenLink = document.getElementById("fullscreen-link");
     const tabs = document.querySelectorAll(".tab");
-    const themeToggle = document.getElementById("theme-toggle");
 
-    function applyTheme(theme) {
-      document.documentElement.setAttribute("data-theme", theme);
-      themeToggle.textContent = theme === "dark" ? "Light" : "Dark";
-      try { localStorage.setItem("devshed-theme", theme); } catch (e) {}
-      if (frame.contentWindow) {
-        frame.contentWindow.postMessage({ type: "devshed-theme", theme }, "*");
-      }
-    }
-
-    applyTheme(document.documentElement.getAttribute("data-theme") || "dark");
-    themeToggle.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme") || "dark";
-      applyTheme(current === "dark" ? "light" : "dark");
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      if (window.DevShedTheme) window.DevShedTheme.toggleTheme();
     });
 
     frame.addEventListener("load", () => {
-      const theme = document.documentElement.getAttribute("data-theme") || "dark";
-      if (frame.contentWindow) {
-        frame.contentWindow.postMessage({ type: "devshed-theme", theme }, "*");
+      if (frame.contentWindow && window.DevShedTheme) {
+        frame.contentWindow.postMessage({ type: "devshed-color-scheme", content: window.DevShedTheme.readStored() }, "*");
       }
     });
 
     function selectTool(key) {
-      tabs.forEach(t => t.classList.toggle("active", t.dataset.tool === key));
+      tabs.forEach(t => {
+        const active = t.dataset.tool === key;
+        t.classList.toggle("active", active);
+        if (active) t.setAttribute("aria-current", "page");
+        else t.removeAttribute("aria-current");
+        if (active) t.scrollIntoView({ block: "nearest", inline: "nearest" });
+      });
       if (key === "home" || !TOOLS[key]) {
         workspace.classList.remove("open");
         launcher.style.display = "block";

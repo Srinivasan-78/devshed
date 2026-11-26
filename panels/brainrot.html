@@ -1,78 +1,82 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <script>try{document.querySelector('meta[name="color-scheme"]').content=localStorage.getItem("devshed-color-scheme")??"light dark";}catch(e){}</script>
   <title>Study Brainrot Generator — DevShed</title>
   <link rel="icon" href="data:," />
-  <script>
-    (function () {
-      try {
-        var saved = localStorage.getItem("devshed-theme");
-        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        document.documentElement.setAttribute("data-theme", saved || (prefersDark ? "dark" : "light"));
-      } catch (e) {}
-    })();
-  </script>
+  <link rel="stylesheet" href="../shared/devshed-theme.css" />
+  <script src="../shared/devshed-theme.js"></script>
   <style>
-    :root, html[data-theme="dark"] { color-scheme:dark; --bg:#0b0f17; --card:#121826; --border:#243047; --text:#e6edf7; --muted:#93a4bf; --accent:#3b82f6; }
-    html[data-theme="light"] { color-scheme:light; --bg:#f6f8fb; --card:#fff; --border:#dbe2ee; --text:#0f172a; --muted:#475569; --accent:#2563eb; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:2rem 1.25rem; max-width:940px; margin-inline:auto; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
-    h1 { margin-top:0; } p { color:var(--muted); line-height:1.5; }
-    .row { display:grid; grid-template-columns:1fr 220px; gap:0.75rem; margin-bottom:0.75rem; }
-    @media (max-width:600px) { .row { grid-template-columns:1fr; } }
-    label { display:block; font-size:0.82rem; color:var(--muted); margin-bottom:0.3rem; }
-    input[type="text"], select { width:100%; padding:0.58rem 0.75rem; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:0.95rem; }
-    .check { display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:var(--text); margin-bottom:0.75rem; cursor:pointer; }
-    pre { background:var(--bg); border:1px solid var(--border); padding:0.9rem; border-radius:8px; overflow:auto; font-size:0.85rem; line-height:1.45; }
-    .actions { display:flex; gap:0.6rem; flex-wrap:wrap; }
-    .btn { display:inline-block; padding:0.5rem 0.9rem; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; font-size:0.875rem; border:0; cursor:pointer; }
-    .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 0.85rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--c-body);
+      margin-bottom: 0.9rem;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>Study Brainrot Generator</h1>
-  <p>Generate short 1080×1920 captioned study videos from Wikipedia articles via the 4-stage Python + FFmpeg + edge-tts pipeline (or via GitHub Actions).</p>
-
-  <div class="card">
-    <h3>Pipeline Command Builder</h3>
-    <div class="row">
-      <div>
-        <label for="topic">Wikipedia Topic</label>
-        <input id="topic" type="text" value="TCP/IP" placeholder="Enter any topic..." />
-      </div>
-      <div>
-        <label for="bg">Background Series</label>
-        <select id="bg">
-          <option value="part" selected>part (19 clips)</option>
-          <option value="partty">partty (8 clips)</option>
-          <option value="1">1 (standalone)</option>
-          <option value="2">2 (standalone)</option>
-          <option value="5">5 (standalone)</option>
-          <option value="6">6 (standalone)</option>
-        </select>
-      </div>
-    </div>
-    <label class="check">
-      <input id="manual" type="checkbox" />
-      Skip AI &amp; Wikipedia (validate a local <code>build/script.json</code> instead)
-    </label>
-    <pre id="cmd"></pre>
-    <div class="actions">
-      <button id="copy-btn" class="btn" type="button">Copy Commands</button>
-      <a class="btn btn-ghost" href="https://github.com/Srinivasan-78/devshed/actions/workflows/generate-study-video.yml" target="_blank" rel="noopener">Run in GitHub Actions ↗</a>
-      <a class="btn btn-ghost" href="https://github.com/Srinivasan-78/devshed/tree/main/study-brainrot-generator" target="_blank" rel="noopener">Browse Source ↗</a>
-    </div>
+  <div class="ds-standalone-bar ds-standalone-only">
+    <a href="../#brainrot">&larr; Back to DevShed</a>
+    <span>05 // STUDY BRAINROT GENERATOR</span>
   </div>
 
+  <main class="ds-page">
+    <div class="ds-hero">
+      <p class="ds-eyebrow">05 // Python + TTS + FFmpeg</p>
+      <h1 class="ds-title">Study Brainrot Generator</h1>
+      <p class="ds-lede">Generate short 1080×1920 captioned study videos from Wikipedia articles via the 4-stage Python + FFmpeg + edge-tts pipeline (or via GitHub Actions).</p>
+    </div>
+
+    <section class="ds-card">
+      <h2>Pipeline Command Builder</h2>
+      <div class="form-grid">
+        <div>
+          <label class="ds-label" for="topic">Wikipedia Topic</label>
+          <input id="topic" class="ds-input" type="text" value="TCP/IP" placeholder="Enter any topic..." />
+        </div>
+        <div>
+          <label class="ds-label" for="bg">Background Series</label>
+          <select id="bg" class="ds-select">
+            <option value="part" selected>part (19 clips)</option>
+            <option value="partty">partty (8 clips)</option>
+            <option value="1">1 (standalone)</option>
+            <option value="2">2 (standalone)</option>
+            <option value="5">5 (standalone)</option>
+            <option value="6">6 (standalone)</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="check-row">
+        <input id="manual" type="checkbox" />
+        Skip AI &amp; Wikipedia (validate a local <code>build/script.json</code> instead)
+      </label>
+
+      <pre id="cmd" class="ds-pre"></pre>
+
+      <div class="ds-actions">
+        <button id="copy-btn" class="ds-btn ds-btn-primary" type="button">Copy Commands</button>
+        <a class="ds-btn" href="https://github.com/Srinivasan-78/devshed/actions/workflows/generate-study-video.yml" target="_blank" rel="noopener">Run in GitHub Actions ↗</a>
+        <a class="ds-btn" href="https://github.com/Srinivasan-78/devshed/tree/main/study-brainrot-generator" target="_blank" rel="noopener">Browse Source ↗</a>
+      </div>
+    </section>
+  </main>
+
   <script>
-    window.addEventListener("message", (e) => {
-      if (e.data && e.data.type === "devshed-theme") {
-        document.documentElement.setAttribute("data-theme", e.data.theme);
-      }
-    });
     const topic = document.getElementById("topic");
     const bg = document.getElementById("bg");
     const manual = document.getElementById("manual");

@@ -10,10 +10,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<script>try{document.querySelector('meta[name="color-scheme"]').content=localStorage.getItem("devshed-color-scheme")??"light dark";}catch(e){}</script>
 <meta name="description" content="Merge, split, and rearrange PDFs directly in your browser — private, fast, and files never leave your device.">
-<title>PDF Tools</title>
+<title>PDF Tools — DevShed</title>
 <link rel="icon" href="data:,">
+<link rel="stylesheet" href="../shared/devshed-theme.css">
 <link rel="stylesheet" href="style.css">
+<script src="../shared/devshed-theme.js"></script>
 <!-- Pinned versions with subresource integrity: these three libraries handle
      every byte of your PDF, so the browser must refuse a script that does not
      hash to exactly what was reviewed, even if the CDN serves something else. -->
@@ -28,18 +32,27 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
-<header>
-  <span class="back" id="backBtn">&larr; Tools</span>
-  <h1 id="pageTitle">PDF Tools</h1>
-</header>
-<main>
+<div class="ds-standalone-bar ds-standalone-only">
+  <a href="../#pdf">&larr; Back to DevShed</a>
+  <span>01 // CLIENT-SIDE PDF</span>
+</div>
+
+<main class="ds-page">
+  <div class="ds-hero" id="pdfHero">
+    <p class="ds-eyebrow">01 // Client-Side PDF</p>
+    <div class="pdf-head-row">
+      <h1 class="ds-title" id="pageTitle">Browser PDF Tools</h1>
+      <button type="button" class="ds-btn back" id="backBtn">&larr; All PDF Tools</button>
+    </div>
+    <p class="ds-lede" id="pdfLede">Merge, split, rotate, number, and rearrange PDFs entirely in your browser — files never leave your device.</p>
+  </div>
 
   <section class="screen active" id="screen-home">
     <div class="grid" id="toolGrid"></div>
   </section>
 
   <section class="screen" id="screen-upload">
-    <div id="dropzone">
+    <div id="dropzone" class="ds-card">
       <p id="dropzoneLabel">Drop PDF file(s) here, or click to choose</p>
       <input type="file" id="fileInput" accept="application/pdf">
     </div>
@@ -52,17 +65,18 @@
     <ul class="file-list hidden" id="fileList"></ul>
     <div id="editorCanvasWrap" class="hidden"><canvas id="editorCanvas"></canvas><div id="textLayer"></div></div>
     <div class="toolbar-row" style="margin-top:24px">
-      <button class="btn" id="processBtn">Process</button>
+      <button type="button" class="ds-btn ds-btn-primary btn" id="processBtn">Process</button>
     </div>
     <p class="status" id="workspaceStatus"></p>
   </section>
 
   <section class="screen" id="screen-result">
-    <div class="result-box">
+    <div class="ds-card result-box">
       <p id="resultText">Done!</p>
-      <button class="btn" id="downloadBtn">Download</button>
-      <br><br>
-      <button class="btn secondary small" id="startOverBtn">Start over</button>
+      <div class="ds-actions" style="justify-content:center">
+        <button type="button" class="ds-btn ds-btn-primary btn" id="downloadBtn">Download</button>
+        <button type="button" class="ds-btn btn secondary small" id="startOverBtn">Start over</button>
+      </div>
     </div>
   </section>
 

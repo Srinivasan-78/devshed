@@ -1,68 +1,92 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <script>try{document.querySelector('meta[name="color-scheme"]').content=localStorage.getItem("devshed-color-scheme")??"light dark";}catch(e){}</script>
   <title>Minecraft Server GitOps — DevShed</title>
   <link rel="icon" href="data:," />
-  <script>
-    (function () {
-      try {
-        var saved = localStorage.getItem("devshed-theme");
-        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        document.documentElement.setAttribute("data-theme", saved || (prefersDark ? "dark" : "light"));
-      } catch (e) {}
-    })();
-  </script>
+  <link rel="stylesheet" href="../shared/devshed-theme.css" />
+  <script src="../shared/devshed-theme.js"></script>
   <style>
-    :root, html[data-theme="dark"] { color-scheme:dark; --bg:#0b0f17; --card:#121826; --border:#243047; --text:#e6edf7; --muted:#93a4bf; --accent:#3b82f6; --accent-soft:rgba(59,130,246,0.14); }
-    html[data-theme="light"] { color-scheme:light; --bg:#f6f8fb; --card:#fff; --border:#dbe2ee; --text:#0f172a; --muted:#475569; --accent:#2563eb; --accent-soft:rgba(37,99,235,0.1); }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:2rem 1.25rem; max-width:940px; margin-inline:auto; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
-    h1 { margin-top:0; } p { color:var(--muted); line-height:1.5; }
-    .file-tabs { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.75rem; }
-    .ftab { border:1px solid var(--border); background:transparent; color:var(--text); padding:0.35rem 0.7rem; border-radius:7px; cursor:pointer; font-size:0.82rem; font-family:ui-monospace,monospace; }
-    .ftab.active { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
-    pre { background:var(--bg); border:1px solid var(--border); padding:0.9rem; border-radius:8px; overflow:auto; font-size:0.85rem; max-height:340px; line-height:1.45; }
-    .actions { display:flex; gap:0.6rem; flex-wrap:wrap; }
-    .btn { display:inline-block; padding:0.5rem 0.9rem; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; font-size:0.875rem; }
-    .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
-    .note { font-size:0.84rem; color:var(--muted); margin-top:0.6rem; }
+    .file-tabs {
+      display: flex;
+      gap: 0.25rem;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--c-rule);
+      margin-bottom: 0.9rem;
+      scrollbar-width: none;
+    }
+    .file-tabs::-webkit-scrollbar { display: none; }
+    .ftab {
+      position: relative;
+      flex: none;
+      border: 0;
+      background: transparent;
+      color: var(--c-mute);
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .ftab:hover { color: var(--c-body); }
+    .ftab[aria-selected="true"] {
+      color: var(--c-signal);
+    }
+    .ftab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      border-block-end: 3px solid var(--c-signal);
+    }
+    #props { max-height: 360px; }
   </style>
 </head>
 <body>
-  <h1>Minecraft Server GitOps</h1>
-  <p>Run a 24/7 Minecraft server controlled by editing config files in Git. Note: <code>sync-config.sh</code> guards against deploying the sample <code>00000000-0000-0000-0000-000000000000</code> UUID until replaced.</p>
-
-  <div class="card">
-    <h3>Live Config Inspector</h3>
-    <div class="file-tabs" role="tablist">
-      <button class="ftab active" data-file="server.properties">server.properties</button>
-      <button class="ftab" data-file="server.env">server.env</button>
-      <button class="ftab" data-file="ops.json">ops.json</button>
-      <button class="ftab" data-file="whitelist.json">whitelist.json</button>
-      <button class="ftab" data-file="banned-players.json">banned-players.json</button>
-    </div>
-    <pre id="props">Loading server.properties...</pre>
-    <div class="actions">
-      <a class="btn" href="https://github.com/Srinivasan-78/devshed/tree/main/minecraft-server-gitops/config" target="_blank" rel="noopener">Edit Configs on GitHub ↗</a>
-      <a class="btn btn-ghost" href="https://github.com/Srinivasan-78/devshed/tree/main/minecraft-server-gitops/scripts" target="_blank" rel="noopener">View Server Scripts ↗</a>
-    </div>
+  <div class="ds-standalone-bar ds-standalone-only">
+    <a href="../#minecraft">&larr; Back to DevShed</a>
+    <span>06 // MINECRAFT SERVER GITOPS</span>
   </div>
 
-  <script>
-    window.addEventListener("message", (e) => {
-      if (e.data && e.data.type === "devshed-theme") {
-        document.documentElement.setAttribute("data-theme", e.data.theme);
-      }
-    });
+  <main class="ds-page">
+    <div class="ds-hero">
+      <p class="ds-eyebrow">06 // GitOps / Game Server</p>
+      <h1 class="ds-title">Minecraft Server GitOps</h1>
+      <p class="ds-lede">Run a 24/7 Minecraft server controlled declaratively via Git. <code>sync-config.sh</code> blocks deployment if the sample <code>00000000-0000-0000-0000-000000000000</code> UUID is still present.</p>
+    </div>
 
+    <section class="ds-card">
+      <h2>Live Config Inspector</h2>
+      <div class="file-tabs" role="tablist" aria-label="Minecraft configuration files">
+        <button type="button" role="tab" class="ftab" data-file="server.properties" aria-selected="true" tabindex="0">server.properties</button>
+        <button type="button" role="tab" class="ftab" data-file="server.env" aria-selected="false" tabindex="-1">server.env</button>
+        <button type="button" role="tab" class="ftab" data-file="ops.json" aria-selected="false" tabindex="-1">ops.json</button>
+        <button type="button" role="tab" class="ftab" data-file="whitelist.json" aria-selected="false" tabindex="-1">whitelist.json</button>
+        <button type="button" role="tab" class="ftab" data-file="banned-players.json" aria-selected="false" tabindex="-1">banned-players.json</button>
+      </div>
+      <div role="tabpanel" id="config-panel" aria-label="Selected configuration file" tabindex="0">
+        <pre id="props" class="ds-pre">Loading server.properties...</pre>
+      </div>
+      <div class="ds-actions">
+        <a class="ds-btn ds-btn-primary" href="https://github.com/Srinivasan-78/devshed/tree/main/minecraft-server-gitops/config" target="_blank" rel="noopener">Edit Configs on GitHub ↗</a>
+        <a class="ds-btn" href="https://github.com/Srinivasan-78/devshed/tree/main/minecraft-server-gitops/scripts" target="_blank" rel="noopener">View Server Scripts ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
     const propsEl = document.getElementById("props");
-    const tabs = document.querySelectorAll(".ftab");
+    const tablist = document.querySelector('[role="tablist"]');
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 
     async function loadConfig(filename) {
-      tabs.forEach(t => t.classList.toggle("active", t.dataset.file === filename));
+      tabs.forEach(t => {
+        const selected = t.dataset.file === filename;
+        t.setAttribute("aria-selected", String(selected));
+        t.tabIndex = selected ? 0 : -1;
+      });
       propsEl.textContent = `Loading ${filename}...`;
       try {
         const res = await fetch(`../minecraft-server-gitops/config/${filename}`);
@@ -74,6 +98,21 @@
     }
 
     tabs.forEach(t => t.addEventListener("click", () => loadConfig(t.dataset.file)));
+    tablist.addEventListener("keydown", (e) => {
+      const idx = tabs.indexOf(document.activeElement);
+      if (idx === -1) return;
+      let next = null;
+      if (e.key === "ArrowRight") next = tabs[(idx + 1) % tabs.length];
+      else if (e.key === "ArrowLeft") next = tabs[(idx - 1 + tabs.length) % tabs.length];
+      else if (e.key === "Home") next = tabs[0];
+      else if (e.key === "End") next = tabs[tabs.length - 1];
+      if (next) {
+        e.preventDefault();
+        next.focus();
+        loadConfig(next.dataset.file);
+      }
+    });
+
     loadConfig("server.properties");
   </script>
 </body>

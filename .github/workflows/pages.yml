@@ -21,8 +21,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Stage unified Pages artifact
         run: |
-          mkdir -p _site/panels _site/browser-pdf-tools _site/doc2md-action/site _site/self-healing-deployment/dashboard _site/self-healing-deployment/deployment_log _site/minecraft-server-gitops/config
+          mkdir -p _site/shared _site/panels _site/browser-pdf-tools _site/doc2md-action/site _site/self-healing-deployment/dashboard _site/self-healing-deployment/deployment_log _site/minecraft-server-gitops/config
           cp index.html _site/
+          cp -r shared/* _site/shared/
           cp -r panels/* _site/panels/
           cp browser-pdf-tools/index.html browser-pdf-tools/app.js browser-pdf-tools/style.css _site/browser-pdf-tools/
           cp -r doc2md-action/site/* _site/doc2md-action/site/

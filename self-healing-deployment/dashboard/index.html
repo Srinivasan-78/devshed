@@ -10,41 +10,90 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light dark" />
+<script>try{document.querySelector('meta[name="color-scheme"]').content=localStorage.getItem("devshed-color-scheme")??"light dark";}catch(e){}</script>
 <meta name="description" content="Deployment history and health status dashboard for demo-service self-healing pipeline." />
-<title>Deployment History — demo-service</title>
+<title>Deployment History — DevShed</title>
 <link rel="icon" href="data:," />
+<link rel="stylesheet" href="../../shared/devshed-theme.css" />
+<script src="../../shared/devshed-theme.js"></script>
 <style>
-  body { font-family: -apple-system, system-ui, sans-serif; background: #0b0f14; color: #e6edf3; margin: 0; padding: 40px; }
-  .wrap { max-width: 720px; margin: 0 auto; }
-  h1 { font-size: 20px; margin-bottom: 4px; }
-  p.sub { color: #8b949e; font-size: 13px; margin-top: 0; }
-  .event { display: flex; gap: 14px; padding: 14px 0; border-top: 1px solid #21262d; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-  .success .dot { background: #3fb950; }
-  .rollback .dot { background: #f85149; }
-  .failed .dot { background: #f85149; }
-  .meta { font-size: 12px; color: #8b949e; }
-  .version { font-weight: 600; }
-  .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
-  .success .badge { background: #1a3a1f; color: #3fb950; }
-  .rollback .badge { background: #3a1c1a; color: #f85149; }
-  .reason { color: #8b949e; font-size: 12px; margin-top: 2px; }
-  #empty { color: #8b949e; margin-top: 24px; }
-  input[type=file] { margin-top: 20px; color: #8b949e; }
+  .event {
+    display: flex;
+    gap: 0.9rem;
+    padding: 0.95rem 0;
+    border-top: 1px solid var(--c-rule);
+    align-items: flex-start;
+  }
+  .event:first-child { border-top: 0; padding-top: 0.2rem; }
+  .event:last-child { padding-bottom: 0.2rem; }
+  .status-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .success .status-icon { background: var(--c-probe-wash); color: var(--c-probe); border: 1px solid var(--c-probe); }
+  .rollback .status-icon, .failed .status-icon { background: var(--c-alarm-wash); color: var(--c-alarm); border: 1px solid var(--c-alarm); }
+  .head-row { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
+  .version { font-weight: 600; font-family: var(--font-mono); font-size: 0.95rem; }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--ds-radius-sm);
+  }
+  .success .badge { background: var(--c-probe-wash); color: var(--c-probe); }
+  .rollback .badge, .failed .badge { background: var(--c-alarm-wash); color: var(--c-alarm); }
+  .meta { font-family: var(--font-mono); font-size: 0.78rem; color: var(--c-mute); margin-top: 0.2rem; }
+  .reason { font-family: var(--font-mono); color: var(--c-alarm); font-size: 0.8rem; margin-top: 0.25rem; }
+  #empty { color: var(--c-mute); padding: 0.5rem 0; }
+  .upload-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .file-name { font-family: var(--font-mono); font-size: 0.8rem; color: var(--c-mute); }
   .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 </style>
 </head>
 <body>
-<main class="wrap">
-  <h1>Deployment History</h1>
-  <p class="sub">demo-service · self-healing pipeline</p>
-  <div id="events"></div>
-  <div id="empty" style="display:none;">No deployment_log/deployments.json loaded yet — run a deploy or chaos test, then load the file below.</div>
-  <label for="fileInput" class="visually-hidden">Upload deployment log JSON</label>
-  <input type="file" id="fileInput" accept="application/json" aria-label="Upload deployments JSON log" />
+<div class="ds-standalone-bar ds-standalone-only">
+  <a href="../../#deploy">&larr; Back to DevShed</a>
+  <span>03 // SRE / BLUE-GREEN</span>
+</div>
+
+<main class="ds-page">
+  <div class="ds-hero">
+    <p class="ds-eyebrow">03 // SRE / Blue-Green</p>
+    <h1 class="ds-title">Self-Healing Deployment</h1>
+    <p class="ds-lede">Blue/green deployment timeline for <code>demo-service</code> showing health-check validations and automated rollbacks.</p>
+  </div>
+
+  <section class="ds-card">
+    <h2>Deployment Timeline</h2>
+    <div id="events"></div>
+    <div id="empty" style="display:none;">No <code>deployment_log/deployments.json</code> loaded yet — run a deploy or chaos test, then load a log file below.</div>
+  </section>
+
+  <section class="ds-card">
+    <h2>Inspect Another Log</h2>
+    <div class="upload-row">
+      <label for="fileInput" class="ds-btn ds-btn-primary">Load deployments.json</label>
+      <input type="file" id="fileInput" class="visually-hidden" accept="application/json" />
+      <span id="fileName" class="file-name">Loaded default: deployment_log/deployments.json</span>
+    </div>
+  </section>
 </main>
 
 <script>
+const ICONS = { success: "✓", rollback: "↺", failed: "✕" };
+
 function render(events) {
   const container = document.getElementById("events");
   const empty = document.getElementById("empty");
@@ -55,45 +104,46 @@ function render(events) {
   }
   empty.style.display = "none";
   events.slice().reverse().forEach(e => {
+    const status = e.status || "unknown";
     const div = document.createElement("div");
-    div.className = "event " + (e.status || "");
+    div.className = "event " + status;
 
-    const dot = document.createElement("div");
-    dot.className = "dot";
+    const icon = document.createElement("div");
+    icon.className = "status-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = ICONS[status] || "•";
 
     const body = document.createElement("div");
-
     const head = document.createElement("div");
+    head.className = "head-row";
+
     const version = document.createElement("span");
     version.className = "version";
     version.textContent = e.version || "(unknown)";
+
     const badge = document.createElement("span");
     badge.className = "badge";
-    badge.textContent = e.status || "";
-    head.appendChild(version);
-    head.appendChild(badge);
+    badge.textContent = status;
+    head.append(version, badge);
 
     const meta = document.createElement("div");
     meta.className = "meta";
     meta.textContent = e.timestamp || "";
 
-    body.appendChild(head);
-    body.appendChild(meta);
+    body.append(head, meta);
 
     if (e.reason) {
       const reason = document.createElement("div");
       reason.className = "reason";
-      reason.textContent = e.reason;
+      reason.textContent = "reason: " + e.reason;
       body.appendChild(reason);
     }
 
-    div.appendChild(dot);
-    div.appendChild(body);
+    div.append(icon, body);
     container.appendChild(div);
   });
 }
 
-// Try auto-loading the log relative to this file (works when served, not on file://)
 fetch("../deployment_log/deployments.json")
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(render)
@@ -102,6 +152,7 @@ fetch("../deployment_log/deployments.json")
 document.getElementById("fileInput").addEventListener("change", (ev) => {
   const file = ev.target.files[0];
   if (!file) return;
+  document.getElementById("fileName").textContent = "Loaded: " + file.name;
   const reader = new FileReader();
   reader.onload = () => {
     try {
