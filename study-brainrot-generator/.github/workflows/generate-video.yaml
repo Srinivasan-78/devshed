@@ -1,0 +1,138 @@
+# @authormark v1 -- do not remove (authorship watermark)⁠​​‌‌​​‌​​‌​​​​​‌​‌‌‌‌​​​​‌​‌​​​​​‌‌‌​​‌‌​‌​​‌‌​‌​‌‌​‌‌​‌​‌‌​‌‌​​​‌​‌​‌​​​‌‌​‌‌‌​​‌‌​​‌​​​‌​​​‌‌‌​‌​​‌‌​​​‌​​​​‌‌​‌‌​​​​‌​‌​‌‌​‌​​​‌‌​​​‌​‌​‌​​‌​​​‌‌​​‌​​‌​​‌​​​​‌​‌​​​​​‌​​‌‌‌​⁠
+# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
+# Author: https://github.com/Srinivasan-78
+# SPDX-License-Identifier: MIT
+# Fingerprint: AMK1.2AxPsMmlTndGLCaZ1R2HPN
+name: Generate Study Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Study topic"
+        required: true
+        type: string
+      background_group:
+        description: "Background series (part, partty, 1, 2, 5, 6)"
+        required: false
+        default: "part"
+        type: string
+      manual_script:
+        description: "Optional: paste script JSON to skip research + LLM entirely"
+        required: false
+        default: ""
+        type: string
+
+# Read-only: this job clones, renders and uploads an artifact. It never writes
+# to the repository, so its token should not be able to.
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      # Only the scripts are checked out up front. Blobs are fetched on demand so
+      # the 30-odd background clips don't all download on every run.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            scripts
+            requirements.txt
+          sparse-checkout-cone-mode: false
+
+      # Inputs are passed through env rather than interpolated into the shell:
+      # `${{ }}` is substituted before bash parses the line, so a raw input would
+      # be executed as shell code.
+      - name: Fetch only the selected background series
+        shell: bash
+        env:
+          BACKGROUND_GROUP: ${{ inputs.background_group }}
+        run: |
+          set -euo pipefail
+          case "$BACKGROUND_GROUP" in
+            "" | *[!A-Za-z0-9_-]*)
+              echo "ERROR: background_group must be alphanumeric (got '$BACKGROUND_GROUP')" >&2
+              exit 1
+              ;;
+          esac
+          # Both patterns are needed: series clips are `part_00.mp4`, standalone
+          # clips are `1.mp4`. `part_*` also keeps `partty_*` out of the fetch.
+          git sparse-checkout add "assets/${BACKGROUND_GROUP}_*" "assets/${BACKGROUND_GROUP}.*"
+          echo "Clips fetched:"
+          ls -la assets/ || true
+
+          # Alphanumeric is not the same as existing. Without this check a
+          # valid-looking typo got through here and only failed in assemble.py
+          # at the very end -- after the Wikipedia research, a quota-limited LLM
+          # call and the whole edge-tts synthesis had already run. Fail in the
+          # first step instead, and say what the real choices are.
+          shopt -s nullglob
+          clips=( "assets/${BACKGROUND_GROUP}"_*.mp4 "assets/${BACKGROUND_GROUP}".mp4 )
+          if [ ${#clips[@]} -eq 0 ]; then
+            echo "ERROR: no clips for background_group '$BACKGROUND_GROUP'." >&2
+            echo "Available series:" >&2
+            git ls-tree --name-only HEAD assets/ \
+              | sed -E 's#^assets/##; s#_[0-9]+\.mp4$##; s#\.mp4$##' \
+              | sort -u | sed 's/^/  /' >&2
+            exit 1
+          fi
+          echo "Matched ${#clips[@]} clip(s) for '$BACKGROUND_GROUP'."
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Use supplied script
+        if: inputs.manual_script != ''
+        env:
+          MANUAL_SCRIPT: ${{ inputs.manual_script }}
+          TOPIC: ${{ inputs.topic }}
+        run: |
+          mkdir -p build
+          printf '%s' "$MANUAL_SCRIPT" > build/script.json
+          python scripts/script_gen.py --check
+
+      - name: Research
+        if: inputs.manual_script == ''
+        env:
+          TOPIC: ${{ inputs.topic }}
+        run: python scripts/research.py
+
+      - name: Generate script
+        if: inputs.manual_script == ''
+        env:
+          TOPIC: ${{ inputs.topic }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: python scripts/script_gen.py
+
+      - name: Generate voiceover
+        env:
+          TTS_VOICE: ${{ vars.TTS_VOICE || 'en-US-ChristopherNeural' }}
+          TTS_RATE: ${{ vars.TTS_RATE || '+15%' }}
+        run: python scripts/voice_gen.py
+
+      - name: Assemble video
+        env:
+          BACKGROUND_GROUP: ${{ inputs.background_group }}
+          MAX_VIDEO_SECONDS: ${{ vars.MAX_VIDEO_SECONDS || '55' }}
+        run: python scripts/assemble.py
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: study-video-${{ github.run_id }}
+          path: build/output_*.mp4
+          retention-days: 14
