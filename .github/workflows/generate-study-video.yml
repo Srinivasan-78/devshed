@@ -111,7 +111,7 @@ jobs:
           MAX_VIDEO_SECONDS: ${{ vars.MAX_VIDEO_SECONDS || '55' }}
         run: python scripts/assemble.py
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: study-video-${{ github.run_id }}
           path: study-brainrot-generator/build/output_*.mp4
