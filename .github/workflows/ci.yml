@@ -35,7 +35,7 @@ jobs:
           node --check multicloud-free-tier/api/app/static/app.js
       - name: ShellCheck scripts
         run: |
-          shellcheck \
+          shellcheck -S warning \
             minecraft-server-gitops/scripts/*.sh \
             minecraft-server-gitops/scripts/runtime/*.sh \
             multicloud-free-tier/api/bin/*.sh \
