@@ -1,0 +1,27 @@
+# Real config, built from api/.env.example. Holds SECRET_KEY and FERNET_KEY,
+# and FERNET_KEY decrypts every stored cloud credential.
+.env
+api/.env
+
+# Terraform per-tenant workspaces and state
+terraform/tenants/
+terraform/workspaces/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.tfout.json
+
+# Ansible
+*.retry
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Master Bot hygiene additions
+.DS_Store
+Thumbs.db
