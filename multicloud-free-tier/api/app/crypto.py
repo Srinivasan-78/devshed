@@ -1,8 +1,3 @@
-# @authormark v1 -- do not remove (authorship watermark)⁠​‌‌‌‌​​​​‌‌‌​‌​‌​‌​‌​​​‌​‌‌‌​​​‌​‌‌‌​‌​​​‌​​​​‌​​‌‌​‌​‌​​‌‌​​​‌​​‌​‌​​​‌​‌​​‌‌‌​​‌​​​​​‌​‌​​​‌‌​​‌​​​​‌​​‌‌​​​‌​​​‌‌‌​​​​‌​‌‌​​​​‌​‌‌​‌​​​‌‌​‌‌‌​‌‌​​​‌‌​​‌‌​‌​‌​‌​​​‌​​​​‌‌‌​​‌⁠
-# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
-# Author: https://github.com/Srinivasan-78
-# SPDX-License-Identifier: MIT
-# Fingerprint: AMK1.xuQqtBjbQNAFBb8XZ7c5D9
 """Fernet wrapper for cloud-credential encryption.
 
 The Ansible side calls ``bin/crypto.py``, which is these same two library calls

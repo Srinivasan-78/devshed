@@ -1,8 +1,3 @@
-# @authormark v1 -- do not remove (authorship watermark)⁠​‌‌​‌​‌​​‌​‌​‌‌​​‌​​​‌​​​‌​‌​‌‌​​‌‌‌‌​​​​​‌‌​‌​​​​‌‌‌​​​​‌‌​‌‌​‌​​‌‌​‌‌​​​‌​‌‌​‌​‌‌‌​‌​​​‌​‌​​‌​​‌‌‌​‌​‌​​‌‌​‌​‌​‌‌​‌‌‌​​‌‌‌​‌‌​​​‌‌‌​​‌​‌‌​‌‌‌‌​‌‌​​‌​​​​‌‌​​‌​​‌‌​‌​​‌​‌‌​‌​​​⁠
-# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
-# Author: https://github.com/Srinivasan-78
-# SPDX-License-Identifier: MIT
-# Fingerprint: AMK1.jVDVx48m6-tRu5nv9od2ih
 """Thin psycopg2 access layer. Replaces SQLAlchemy, the ORM models and Alembic.
 
 Hand-written SQL sits next to each route. The schema is ``db/schema.sql``,

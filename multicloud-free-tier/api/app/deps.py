@@ -1,8 +1,3 @@
-# @authormark v1 -- do not remove (authorship watermark)⁠​‌‌​​​‌​​‌​​‌​‌​​‌‌​‌​‌‌​‌‌​​​‌‌​​‌​‌‌​‌​‌‌‌‌​​‌​​‌‌​‌​​​‌‌​‌‌​‌​‌​​‌​‌​​‌​​‌​​‌​‌​‌‌​​​​​‌‌​‌‌‌​‌​‌​‌​‌​‌‌​‌‌​‌​‌‌‌​​‌​​‌​​‌‌​‌​​‌‌​‌‌‌​‌‌​​‌​​​‌​‌​​‌​​‌‌​‌​​‌​​‌‌​‌​‌​‌​​‌​‌‌⁠
-# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
-# Author: https://github.com/Srinivasan-78
-# SPDX-License-Identifier: MIT
-# Fingerprint: AMK1.bJkc-y4mJIX7UmrM7dRi5K
 """Request helpers. Replaces ``core/deps.py``, which turned a JWT bearer token
 into a ``User`` row; here it is the session cookie instead.
 """

@@ -1,8 +1,3 @@
-# @authormark v1 -- do not remove (authorship watermark)⁠​‌​‌​​‌​​​‌‌​‌​‌​‌‌​‌​‌​​‌‌​‌​​‌​‌​​‌​‌​​‌​​​​‌‌​‌‌​​​‌​​​‌‌​​​‌​‌‌​​​​‌​‌‌​‌​​‌​‌‌​‌‌‌‌​‌​‌​‌​‌​‌‌​‌​‌​​‌​‌​​​​​‌‌‌​‌​‌​​‌‌​​‌​​‌​‌​‌‌​​‌‌​‌​‌‌​‌‌​‌‌‌​​‌‌​‌​​‌​‌‌‌​​​‌​​‌‌​​​​⁠
-# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
-# Author: https://github.com/Srinivasan-78
-# SPDX-License-Identifier: MIT
-# Fingerprint: AMK1.R5jiJCb1aioUjPu2Vkniq0
 """Catalog, provisioning, listing, teardown. Replaces ``routers/resources.py``.
 
 The browser still sends only two labels (``provider``, ``resource_type``). The

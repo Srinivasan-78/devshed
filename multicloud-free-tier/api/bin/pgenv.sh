@@ -1,8 +1,3 @@
-# @authormark v1 -- do not remove (authorship watermark)⁠​‌​‌‌​​​​‌‌‌​​​​​‌‌​​​‌‌​‌​‌‌​​‌​‌‌​‌‌‌‌​‌‌​​‌‌​​‌‌​​‌‌‌​‌‌​‌‌​​​‌‌‌​​‌​​‌​​​​‌‌​‌‌​​​‌‌​​‌‌​​‌​​‌‌​​‌​​​​‌‌​‌‌‌​​‌‌​‌‌‌​‌‌‌​​‌​​​‌‌​‌‌​​‌​‌​‌‌‌​‌​‌​‌‌​​‌​​​​​‌​‌‌‌​​‌​​​‌‌​‌​‌⁠
-# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
-# Author: https://github.com/Srinivasan-78
-# SPDX-License-Identifier: MIT
-# Fingerprint: AMK1.XpcYofglrCc2d77r6WVAr5
 # shellcheck shell=bash
 # Derive the libpq PG* variables from DATABASE_URL so that plain `psql` (in the
 # bash scripts) and the Ansible playbooks share one source of truth. Source it:

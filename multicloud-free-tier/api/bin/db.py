@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-# @authormark v1 -- do not remove (authorship watermark)⁠​‌​​​‌‌‌​‌‌‌​‌‌​​‌‌‌​‌‌​​​‌‌​​​​​‌‌​‌​​​​‌​​​​‌‌​‌‌​​‌​‌​‌‌‌‌​‌​​‌​​‌‌‌‌​‌‌​​‌‌​​‌​​​​‌‌​‌​​​‌‌​​‌‌​​‌‌‌​‌​‌‌‌‌‌​‌‌‌‌​​​​​‌‌​​​​​‌‌​​‌‌​​‌​‌​​​​​‌​​‌‌‌​​​‌‌‌​​‌​​‌‌‌​​‌​‌​‌​‌​​⁠
-# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
-# Author: https://github.com/Srinivasan-78
-# SPDX-License-Identifier: MIT
-# Fingerprint: AMK1.Gvv0hCezOfCFg_x0fPN99T
 """Small database touch-points for the Ansible playbooks — the structured reads
 and writes that are awkward through psql. Simple status flips stay in psql (see
 bin/worker.sh). This is the part of app/services/tasks.py that talked to the DB.
