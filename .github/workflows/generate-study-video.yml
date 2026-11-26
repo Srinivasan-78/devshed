@@ -1,0 +1,118 @@
+name: Generate Study Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Study topic"
+        required: true
+        type: string
+      background_group:
+        description: "Background series (part, partty, 1, 2, 5, 6)"
+        required: false
+        default: "part"
+        type: string
+      manual_script:
+        description: "Optional: paste script JSON to skip research + LLM entirely"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: study-brainrot-generator
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            study-brainrot-generator/scripts
+            study-brainrot-generator/requirements.txt
+          sparse-checkout-cone-mode: false
+
+      - name: Fetch only the selected background series
+        shell: bash
+        env:
+          BACKGROUND_GROUP: ${{ inputs.background_group }}
+        run: |
+          set -euo pipefail
+          case "$BACKGROUND_GROUP" in
+            "" | *[!A-Za-z0-9_-]*)
+              echo "ERROR: background_group must be alphanumeric (got '$BACKGROUND_GROUP')" >&2
+              exit 1
+              ;;
+          esac
+          git sparse-checkout add \
+            "study-brainrot-generator/assets/${BACKGROUND_GROUP}_*" \
+            "study-brainrot-generator/assets/${BACKGROUND_GROUP}.*"
+          shopt -s nullglob
+          clips=( "assets/${BACKGROUND_GROUP}"_*.mp4 "assets/${BACKGROUND_GROUP}".mp4 )
+          if [ ${#clips[@]} -eq 0 ]; then
+            echo "ERROR: no clips for background_group '$BACKGROUND_GROUP'." >&2
+            exit 1
+          fi
+          echo "Matched ${#clips[@]} clip(s) for '$BACKGROUND_GROUP'."
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: study-brainrot-generator/requirements.txt
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Use supplied script
+        if: inputs.manual_script != ''
+        env:
+          MANUAL_SCRIPT: ${{ inputs.manual_script }}
+          TOPIC: ${{ inputs.topic }}
+        run: |
+          mkdir -p build
+          printf '%s' "$MANUAL_SCRIPT" > build/script.json
+          python scripts/script_gen.py --check
+
+      - name: Research
+        if: inputs.manual_script == ''
+        env:
+          TOPIC: ${{ inputs.topic }}
+        run: python scripts/research.py
+
+      - name: Generate script
+        if: inputs.manual_script == ''
+        env:
+          TOPIC: ${{ inputs.topic }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: python scripts/script_gen.py
+
+      - name: Generate voiceover
+        env:
+          TTS_VOICE: ${{ vars.TTS_VOICE || 'en-US-ChristopherNeural' }}
+          TTS_RATE: ${{ vars.TTS_RATE || '+15%' }}
+        run: python scripts/voice_gen.py
+
+      - name: Assemble video
+        env:
+          BACKGROUND_GROUP: ${{ inputs.background_group }}
+          MAX_VIDEO_SECONDS: ${{ vars.MAX_VIDEO_SECONDS || '55' }}
+        run: python scripts/assemble.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: study-video-${{ github.run_id }}
+          path: study-brainrot-generator/build/output_*.mp4
+          retention-days: 14

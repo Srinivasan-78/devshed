@@ -38,7 +38,10 @@ const TOOLS = [
 let state = {};
 
 function resetState(){
-  state = { tool:null, files:[], fileBytes:[], pdfDoc:null, pageOrder:[], removedSet:new Set(), keepSet:new Set(), rotationDelta:{}, texts:{}, edits:{} };
+  if (state && state.lastBlobUrl) {
+    URL.revokeObjectURL(state.lastBlobUrl);
+  }
+  state = { tool:null, files:[], fileBytes:[], pdfDoc:null, pageOrder:[], removedSet:new Set(), keepSet:new Set(), rotationDelta:{}, texts:{}, edits:{}, lastBlobUrl:null };
 }
 resetState();
 
@@ -154,7 +157,7 @@ async function enterWorkspace(){
     hint.className='status';
     hint.textContent = BACKEND_URL
       ? 'Click a thumbnail, then click existing text on the page to change it. Replacements reuse the PDF\'s real font where possible.'
-      : 'Edit Text needs a backend configured (BACKEND_URL in app.js) — see /backend.';
+      : 'Edit Text needs a backend configured (BACKEND_URL in app.js) — see browser-pdf-tools/main.py.';
     toolbar.appendChild(hint);
   }
   if (state.tool.id === 'remove' || state.tool.id === 'extract'){
@@ -217,7 +220,8 @@ async function renderThumbs(){
   for (let pos=0; pos<state.pageOrder.length; pos++){
     const origIdx = state.pageOrder[pos];
     const pjsPage = await pjsDoc.getPage(origIdx+1);
-    const viewport = pjsPage.getViewport({scale:0.4});
+    const delta = state.rotationDelta[origIdx] || 0;
+    const viewport = pjsPage.getViewport({ scale: 0.4, rotation: (pjsPage.rotate + delta) % 360 });
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width; canvas.height = viewport.height;
     await pjsPage.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
@@ -229,7 +233,7 @@ async function renderThumbs(){
     if (state.tool.id==='remove' && state.removedSet.has(origIdx)) card.classList.add('removed');
     card.appendChild(canvas);
     const idxLbl = document.createElement('div');
-    idxLbl.className='idx'; idxLbl.textContent = `Page ${pos+1}`;
+    idxLbl.className='idx'; idxLbl.textContent = delta ? `Page ${pos+1} (+${delta}°)` : `Page ${pos+1}`;
     card.appendChild(idxLbl);
 
     if (state.tool.id==='remove'){
@@ -458,6 +462,7 @@ async function doSplit(){
 }
 
 async function copyOrderTo(order){
+  if (!order.length) throw new Error('Select at least one page to keep.');
   const out = await PDFDocument.create();
   const pages = await out.copyPages(state.pdfDoc, order);
   pages.forEach(p=> out.addPage(p));
@@ -522,8 +527,10 @@ async function doEditText(){
 
 // ---------- Result ----------
 function showResult(bytes, filename, mime){
+  if (state.lastBlobUrl) URL.revokeObjectURL(state.lastBlobUrl);
   const blob = new Blob([bytes], {type:mime});
   const url = URL.createObjectURL(blob);
+  state.lastBlobUrl = url;
   $('resultText').textContent = `Your file is ready: ${filename}`;
   const dl = $('downloadBtn');
   dl.onclick = ()=>{

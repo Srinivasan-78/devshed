@@ -75,7 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: srinivasan-78/doc2md-action@v1
+      - uses: Srinivasan-78/devshed/doc2md-action@main
         with:
           files: docs/**/*
           merge-into: markdown/context.md

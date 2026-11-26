@@ -4,40 +4,82 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Multi-Cloud Free Tier — DevShed</title>
+  <link rel="icon" href="data:," />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("devshed-theme");
+        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.setAttribute("data-theme", saved || (prefersDark ? "dark" : "light"));
+      } catch (e) {}
+    })();
+  </script>
   <style>
-    :root { color-scheme: dark light; --bg:#0b0f17; --card:#121826; --border:#243047; --text:#e6edf7; --muted:#93a4bf; --accent:#3b82f6; }
-    @media (prefers-color-scheme: light) { :root { --bg:#f6f8fb; --card:#fff; --border:#dbe2ee; --text:#0f172a; --muted:#475569; --accent:#2563eb; } }
-    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:2rem; max-width:920px; margin-inline:auto; }
+    :root, html[data-theme="dark"] { color-scheme:dark; --bg:#0b0f17; --card:#121826; --border:#243047; --text:#e6edf7; --muted:#93a4bf; --accent:#3b82f6; --warn:#f59e0b; }
+    html[data-theme="light"] { color-scheme:light; --bg:#f6f8fb; --card:#fff; --border:#dbe2ee; --text:#0f172a; --muted:#475569; --accent:#2563eb; --warn:#b45309; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:2rem 1.25rem; max-width:940px; margin-inline:auto; }
     .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
     h1 { margin-top:0; } p { color:var(--muted); line-height:1.5; }
+    .table-wrap { overflow-x:auto; }
     table { width:100%; border-collapse:collapse; margin-top:0.5rem; font-size:0.9rem; }
     th, td { text-align:left; padding:0.6rem; border-bottom:1px solid var(--border); }
-    pre { background:var(--bg); border:1px solid var(--border); padding:0.9rem; border-radius:8px; overflow:auto; font-size:0.85rem; }
-    a.btn { display:inline-block; padding:0.5rem 0.9rem; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; font-size:0.875rem; }
+    pre { background:var(--bg); border:1px solid var(--border); padding:0.9rem; border-radius:8px; overflow:auto; font-size:0.85rem; line-height:1.45; }
+    .actions { display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:0.75rem; }
+    .btn { display:inline-block; padding:0.5rem 0.9rem; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; font-size:0.875rem; border:0; cursor:pointer; }
+    .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .stub { color:var(--warn); font-size:0.8rem; font-weight:600; }
   </style>
 </head>
 <body>
   <h1>Multi-Cloud Free Tier</h1>
-  <p>FastAPI + Ansible dashboard to provision and monitor free-tier compute across AWS, GCP, Azure, and Oracle Cloud. (Requires Python/Docker backend — launch locally below.)</p>
+  <p>Flask + Postgres + Ansible + Terraform dashboard that provisions and auto-destroys free-tier compute instances across clouds (requires Docker Compose locally).</p>
+
   <div class="card">
-    <h3>Run Locally</h3>
-    <pre>cd multicloud-free-tier/api
-cp .env.example .env
-docker build -t multicloud-free-tier .
-docker run -p 8000:8000 --env-file .env multicloud-free-tier</pre>
-    <a class="btn" href="https://github.com/Srinivasan-78/devshed/tree/main/multicloud-free-tier" target="_blank" rel="noopener">Browse Source in DevShed ↗</a>
+    <h3>Run Locally with Docker Compose</h3>
+    <pre id="compose-cmd">cd multicloud-free-tier
+cp api/.env.example api/.env
+# Generate SECRET_KEY and FERNET_KEY:
+python -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(48))"
+python -c "from cryptography.fernet import Fernet; print('FERNET_KEY=' + Fernet.generate_key().decode())"
+docker compose up --build
+# Open http://localhost:8000</pre>
+    <div class="actions">
+      <button id="copy-btn" class="btn" type="button">Copy Commands</button>
+      <a class="btn btn-ghost" href="https://github.com/Srinivasan-78/devshed/tree/main/multicloud-free-tier" target="_blank" rel="noopener">Browse Source in DevShed ↗</a>
+    </div>
   </div>
+
   <div class="card">
-    <h3>Supported Free-Tier Providers</h3>
-    <table>
-      <thead><tr><th>Provider</th><th>Compute</th><th>Provisioner</th></tr></thead>
-      <tbody>
-        <tr><td>AWS</td><td>t2.micro / t3.micro (750 hrs/mo)</td><td>Ansible role + boto3</td></tr>
-        <tr><td>GCP</td><td>e2-micro (US regions)</td><td>Ansible role + google-cloud</td></tr>
-        <tr><td>Azure</td><td>B1s (750 hrs/mo)</td><td>Ansible role + azure-mgmt</td></tr>
-        <tr><td>Oracle Cloud</td><td>VM.Standard.A1.Flex / E2.1.Micro (Always Free)</td><td>Ansible role + oci</td></tr>
-      </tbody>
-    </table>
+    <h3>Server-Enforced Free-Tier Allowlist (<code>api/app/free_tier.py</code>)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Provider</th><th>Locked Spec</th><th>Region</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>AWS</td><td><code>t3.micro</code></td><td><code>us-east-1</code></td><td>Implemented (Terraform + Ansible)</td></tr>
+          <tr><td>GCP</td><td><code>e2-micro</code></td><td><code>us-west1</code></td><td>Implemented (Terraform + Ansible)</td></tr>
+          <tr><td>Azure</td><td><code>Standard_B1s</code></td><td><code>eastus</code></td><td><span class="stub">Terraform stub (API rejects)</span></td></tr>
+          <tr><td>Oracle Cloud</td><td><code>VM.Standard.E2.1.Micro</code></td><td><code>us-ashburn-1</code></td><td><span class="stub">Terraform stub (API rejects)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
+
+  <script>
+    window.addEventListener("message", (e) => {
+      if (e.data && e.data.type === "devshed-theme") {
+        document.documentElement.setAttribute("data-theme", e.data.theme);
+      }
+    });
+    const copyBtn = document.getElementById("copy-btn");
+    copyBtn.addEventListener("click", async () => {
+      const text = document.getElementById("compose-cmd").textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => (copyBtn.textContent = "Copy Commands"), 1500);
+      } catch (e) {}
+    });
+  </script>
 </body>
 </html>
