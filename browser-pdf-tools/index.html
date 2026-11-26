@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<!--
+  @authormark v1 -- do not remove (authorship watermark)⁠​‌​‌​‌‌​​‌​​‌‌​‌​‌​​‌‌‌‌​‌​‌​​‌‌​‌​​‌​‌​​‌​​​​‌‌​‌‌​​‌​‌​‌​‌​​​​​‌‌‌​​‌​​‌‌‌​​‌‌​‌‌​‌‌​​​​‌‌‌​​‌​‌​‌‌​​​​‌​‌‌‌‌‌​‌​​​‌‌‌​​‌‌​‌‌‌​‌‌​‌​‌‌​​‌‌​​​‌​‌‌​‌‌​‌​​‌‌​​‌‌​​‌‌​​​‌​​‌‌​​‌​⁠
+  Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
+  Author: https://github.com/Srinivasan-78
+  SPDX-License-Identifier: MIT
+  Fingerprint: AMK1.VMOSJCePrsl9X_G7k1m312
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Merge, split, and rearrange PDFs directly in your browser — private, fast, and files never leave your device.">
+<title>PDF Tools</title>
+<link rel="stylesheet" href="style.css">
+<!-- Pinned versions with subresource integrity: these three libraries handle
+     every byte of your PDF, so the browser must refuse a script that does not
+     hash to exactly what was reviewed, even if the CDN serves something else. -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"
+        integrity="sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+        integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+        integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+<header>
+  <span class="back" id="backBtn">&larr; Tools</span>
+  <h1 id="pageTitle">PDF Tools</h1>
+</header>
+<main>
+
+  <section class="screen active" id="screen-home">
+    <div class="grid" id="toolGrid"></div>
+  </section>
+
+  <section class="screen" id="screen-upload">
+    <div id="dropzone">
+      <p id="dropzoneLabel">Drop PDF file(s) here, or click to choose</p>
+      <input type="file" id="fileInput" accept="application/pdf">
+    </div>
+    <p class="status" id="uploadStatus"></p>
+  </section>
+
+  <section class="screen" id="screen-workspace">
+    <div class="toolbar-row" id="workspaceToolbar"></div>
+    <div id="thumbs"></div>
+    <ul class="file-list hidden" id="fileList"></ul>
+    <div id="editorCanvasWrap" class="hidden"><canvas id="editorCanvas"></canvas><div id="textLayer"></div></div>
+    <div class="toolbar-row" style="margin-top:24px">
+      <button class="btn" id="processBtn">Process</button>
+    </div>
+    <p class="status" id="workspaceStatus"></p>
+  </section>
+
+  <section class="screen" id="screen-result">
+    <div class="result-box">
+      <p id="resultText">Done!</p>
+      <button class="btn" id="downloadBtn">Download</button>
+      <br><br>
+      <button class="btn secondary small" id="startOverBtn">Start over</button>
+    </div>
+  </section>
+
+</main>
+
+<script defer src="app.js"></script>
+</body>
+</html>
