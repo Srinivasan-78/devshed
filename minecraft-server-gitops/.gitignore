@@ -1,0 +1,16 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Logs & temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Backups & local overrides
+backups/
+*.tar.gz
+.env
+.env.local

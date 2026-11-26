@@ -1,0 +1,79 @@
+# @authormark v1 -- do not remove (authorship watermark)⁠​‌​‌​‌​‌​‌‌​‌‌‌‌​‌​‌‌‌‌‌​‌‌​​‌​‌​​‌‌​‌‌​​​‌‌‌​​​​‌​‌‌​​‌​​‌‌​​​‌​‌‌‌​​‌​​‌​‌‌​​​​‌‌‌​‌‌​​‌​​​‌​‌​‌‌​​‌‌‌​‌‌​‌​​​​‌‌​‌​​‌​‌‌​​‌​‌​‌‌​‌​‌​​‌‌​‌‌​‌​‌​​‌‌‌​​‌‌​​‌​​​‌‌‌​​​​​‌​​​‌​​⁠
+# Copyright (c) 2026 Srinivasan Vijayaraghavan <srinivasan.shyam2000@gmail.com>
+# Author: https://github.com/Srinivasan-78
+# SPDX-License-Identifier: MIT
+# Fingerprint: AMK1.Uo_e68Y1rXvEghiejmNdpD
+name: Backup World
+
+on:
+  schedule:
+    # 04:00 UTC weekly on Sundays (DR best practice: retrieve archives via download: true for off-host redundancy).
+    - cron: "0 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      download:
+        description: "Also pull the archive back and keep it as a GitHub artifact (DR best practice: off-host archive retrieval)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: minecraft-vm
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: minecraft
+    timeout-minutes: 15
+    env:
+      TARGET: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - id: ssh
+        uses: ./.github/actions/ssh-setup
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          user: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ vars.SSH_PORT || '22' }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+
+      - name: Back up world
+        id: backup
+        run: |
+          set -euo pipefail
+          out="$(${{ steps.ssh.outputs.ssh }} "$TARGET" \
+            "sudo ${{ steps.ssh.outputs.remote_dir }}/scripts/backup.sh")"
+          echo "$out"
+          archive="$(printf '%s\n' "$out" | sed -n 's/^ARCHIVE=//p' | tail -1)"
+          # No archive is legitimate on a server whose world has not been
+          # generated yet; backup.sh says so and exits 0.
+          if [ -z "$archive" ]; then
+            echo "::notice::No archive was produced — there is no world to back up yet."
+          fi
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Download archive
+        if: ${{ inputs.download && steps.backup.outputs.archive != '' }}
+        run: |
+          set -euo pipefail
+          mkdir -p upload
+          # The archive is owned by the service user, so stage a readable copy.
+          ${{ steps.ssh.outputs.ssh }} "$TARGET" \
+            "sudo cp '${{ steps.backup.outputs.archive }}' /tmp/ && sudo chown \$(id -u):\$(id -g) /tmp/$(basename '${{ steps.backup.outputs.archive }}')"
+          scp -i ~/.ssh/deploy_key -P "${{ vars.SSH_PORT || '22' }}" -o BatchMode=yes \
+            "$TARGET:/tmp/$(basename '${{ steps.backup.outputs.archive }}')" upload/
+          ${{ steps.ssh.outputs.ssh }} "$TARGET" \
+            "rm -f /tmp/$(basename '${{ steps.backup.outputs.archive }}')"
+
+      - name: Upload artifact
+        if: ${{ inputs.download && steps.backup.outputs.archive != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: minecraft-world-${{ github.run_id }}
+          path: upload/*.tar.gz
+          retention-days: 14
