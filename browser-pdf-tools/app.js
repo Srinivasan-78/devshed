@@ -24,15 +24,15 @@ const BACKEND_URL = ""; // e.g. "https://your-backend.example.com"
 const $ = id => document.getElementById(id);
 
 const TOOLS = [
-  { id:'merge',    name:'Merge PDF',        emoji:'🧩', desc:'Combine multiple PDFs',        multi:true },
-  { id:'split',     name:'Split PDF',        emoji:'✂️', desc:'Each page as its own file',     multi:false },
-  { id:'remove',    name:'Remove Pages',     emoji:'🗑️', desc:"Delete pages you don't need",  multi:false },
-  { id:'extract',   name:'Extract Pages',    emoji:'📑', desc:'Keep only selected pages',      multi:false },
-  { id:'reorder',   name:'Reorder Pages',    emoji:'🔀', desc:'Drag pages into a new order',   multi:false },
-  { id:'rotate',    name:'Rotate PDF',       emoji:'🔄', desc:'Rotate one or all pages',       multi:false },
-  { id:'edit',      name:'Edit Text',        emoji:'📝', desc:'Change existing text on a page', multi:false },
-  { id:'numbers',   name:'Add Page Numbers', emoji:'🔢', desc:'Stamp page numbers',            multi:false },
-  { id:'text',      name:'Add Text',         emoji:'✏️', desc:'Click a page to add new text',  multi:false },
+  { id:'merge',    num:'01 // Combine',   name:'Merge PDF',        desc:'Combine multiple PDFs in order',       multi:true },
+  { id:'split',    num:'02 // Split',     name:'Split PDF',        desc:'Export each page as its own file',     multi:false },
+  { id:'remove',   num:'03 // Remove',    name:'Remove Pages',     desc:"Delete pages you don't need",          multi:false },
+  { id:'extract',  num:'04 // Extract',   name:'Extract Pages',    desc:'Keep only selected pages',             multi:false },
+  { id:'reorder',  num:'05 // Reorder',   name:'Reorder Pages',    desc:'Drag pages into a new order',          multi:false },
+  { id:'rotate',   num:'06 // Rotate',    name:'Rotate PDF',       desc:'Rotate one or all pages by 90°',       multi:false },
+  { id:'numbers',  num:'07 // Number',    name:'Add Page Numbers', desc:'Stamp page numbers at the bottom',     multi:false },
+  { id:'text',     num:'08 // Annotate',  name:'Add Text',         desc:'Click any page to add new text',       multi:false },
+  { id:'edit',     num:'09 // Backend',   name:'Edit Text',        desc:'Change existing text on a page',       multi:false },
 ];
 
 let state = {};
@@ -61,14 +61,14 @@ function buildHome(){
   const grid = $('toolGrid');
   grid.innerHTML='';
   TOOLS.forEach(t=>{
-    const card = document.createElement('div');
+    const card = document.createElement('button');
+    card.type = 'button';
     const isEditDisabled = (t.id === 'edit' && !BACKEND_URL);
     card.className = 'tool-card' + (isEditDisabled ? ' disabled' : '');
-    card.innerHTML = `<div class="emoji">${t.emoji}</div><div class="name">${t.name}</div><div class="desc">${isEditDisabled ? 'Requires backend configured' : t.desc}</div>`;
+    card.disabled = isEditDisabled;
+    card.innerHTML = `<div class="tag">${t.num}</div><div class="name">${t.name}</div><div class="desc">${isEditDisabled ? 'Requires backend configured (main.py)' : t.desc}</div>`;
     if (isEditDisabled) {
       card.title = 'Edit Text needs a backend configured (BACKEND_URL in app.js)';
-      card.style.opacity = '0.5';
-      card.style.cursor = 'not-allowed';
     } else {
       card.addEventListener('click', ()=> openTool(t.id));
     }
@@ -86,7 +86,7 @@ if (document.readyState === 'loading') {
   buildHome();
 }
 
-$('backBtn').addEventListener('click', ()=>{ resetState(); $('pageTitle').textContent='PDF Tools'; showScreen('screen-home'); });
+$('backBtn').addEventListener('click', ()=>{ resetState(); $('pageTitle').textContent='Browser PDF Tools'; showScreen('screen-home'); });
 
 function openTool(id){
   if (id === 'edit' && !BACKEND_URL) return;
@@ -95,14 +95,19 @@ function openTool(id){
   $('pageTitle').textContent = state.tool.name;
   $('fileInput').multiple = !!state.tool.multi;
   $('fileInput').value = '';
-  $('dropzoneLabel').textContent = state.tool.multi ? 'Drop 2+ PDF files here, or click to choose' : 'Drop a PDF file here, or click to choose';
+  $('dropzoneLabel').textContent = state.tool.multi ? 'Select 2 or more PDF files to combine locally.' : 'Select a PDF file to process locally in your browser.';
+  if ($('chooseFileBtn')) {
+    $('chooseFileBtn').textContent = state.tool.multi ? 'Choose PDF files' : 'Choose PDF file';
+  }
   $('uploadStatus').textContent = '';
   showScreen('screen-upload');
 }
 
 // ---------- Upload ----------
 const dropzone = $('dropzone');
-dropzone.addEventListener('click', ()=> $('fileInput').click());
+dropzone.addEventListener('click', (e)=> {
+  if (e.target !== $('fileInput')) $('fileInput').click();
+});
 ['dragenter','dragover'].forEach(ev=> dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=> dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.classList.remove('drag');}));
 dropzone.addEventListener('drop', e=> handleFiles([...e.dataTransfer.files].filter(f=>f.type==='application/pdf')));
@@ -545,4 +550,4 @@ function showResult(bytes, filename, mime){
   showScreen('screen-result');
 }
 
-$('startOverBtn').addEventListener('click', ()=>{ resetState(); $('pageTitle').textContent='PDF Tools'; showScreen('screen-home'); });
+$('startOverBtn').addEventListener('click', ()=>{ resetState(); $('pageTitle').textContent='Browser PDF Tools'; showScreen('screen-home'); });

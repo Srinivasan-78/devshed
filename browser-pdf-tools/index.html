@@ -53,7 +53,9 @@
 
   <section class="screen" id="screen-upload">
     <div id="dropzone" class="ds-card">
-      <p id="dropzoneLabel">Drop PDF file(s) here, or click to choose</p>
+      <p class="drop-title">Drop PDF file(s) here</p>
+      <p class="drop-sub" id="dropzoneLabel">Choose a PDF file to process locally in your browser.</p>
+      <button type="button" class="ds-btn ds-btn-primary" id="chooseFileBtn">Choose PDF file(s)</button>
       <input type="file" id="fileInput" accept="application/pdf">
     </div>
     <p class="status" id="uploadStatus"></p>
