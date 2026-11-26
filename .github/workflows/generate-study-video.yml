@@ -62,7 +62,7 @@ jobs:
           fi
           echo "Matched ${#clips[@]} clip(s) for '$BACKGROUND_GROUP'."
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
