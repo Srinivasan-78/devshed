@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DevShed — 3-in-1 Developer &amp; Ops Workbench</title>
+  <title>DevShed — 6-in-1 Developer &amp; Ops Workbench</title>
   <style>
     :root {
       color-scheme: dark light;
@@ -39,7 +39,7 @@
       flex-direction: column;
     }
     header {
-      padding: 1.25rem 1.5rem;
+      padding: 1rem 1.5rem;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -51,15 +51,15 @@
     .brand { display: flex; align-items: baseline; gap: 0.75rem; }
     .brand h1 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; }
     .brand span { color: var(--muted); font-size: 0.9rem; }
-    .tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tabs { display: flex; gap: 0.45rem; flex-wrap: wrap; }
     .tab {
       border: 1px solid var(--border);
       background: transparent;
       color: var(--text);
-      padding: 0.45rem 0.85rem;
+      padding: 0.4rem 0.75rem;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       font-weight: 500;
     }
     .tab:hover { background: var(--surface-hover); }
@@ -70,26 +70,26 @@
     }
     main { flex: 1; display: flex; flex-direction: column; }
     #launcher {
-      max-width: 1040px;
+      max-width: 1120px;
       width: 100%;
-      margin: 3rem auto;
+      margin: 2.5rem auto;
       padding: 0 1.5rem;
     }
     #launcher h2 { margin: 0 0 0.5rem; font-size: 1.75rem; }
     #launcher p.lead { margin: 0 0 2rem; color: var(--muted); }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 1.25rem;
     }
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 1.5rem;
+      padding: 1.4rem;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.7rem;
       transition: border-color 0.15s ease, transform 0.15s ease;
     }
     .card:hover { border-color: var(--accent); transform: translateY(-2px); }
@@ -103,13 +103,13 @@
       color: var(--accent);
       font-weight: 600;
     }
-    .card h3 { margin: 0; font-size: 1.15rem; }
-    .card p { margin: 0; color: var(--muted); font-size: 0.92rem; line-height: 1.5; flex: 1; }
-    .actions { display: flex; gap: 0.6rem; margin-top: 0.5rem; }
+    .card h3 { margin: 0; font-size: 1.12rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.9rem; line-height: 1.5; flex: 1; }
+    .actions { display: flex; gap: 0.6rem; margin-top: 0.4rem; }
     .btn {
-      padding: 0.55rem 0.9rem;
+      padding: 0.5rem 0.85rem;
       border-radius: 8px;
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
@@ -152,20 +152,23 @@
   <header>
     <div class="brand">
       <h1>DevShed</h1>
-      <span>3 utilities under one roof</span>
+      <span>6 utilities under one roof</span>
     </div>
     <nav class="tabs" aria-label="Tool switcher">
       <button class="tab active" data-tool="home">All Tools</button>
       <button class="tab" data-tool="pdf">PDF Studio</button>
       <button class="tab" data-tool="doc2md">Doc2MD</button>
       <button class="tab" data-tool="deploy">Self-Healing Deploy</button>
+      <button class="tab" data-tool="multicloud">Multi-Cloud</button>
+      <button class="tab" data-tool="brainrot">Study Brainrot</button>
+      <button class="tab" data-tool="minecraft">Minecraft GitOps</button>
     </nav>
   </header>
 
   <main>
     <section id="launcher">
       <h2>Choose a tool to run</h2>
-      <p class="lead">Run everything client-side or inspect live deployment telemetry from one unified GitHub Pages suite.</p>
+      <p class="lead">Run browser-native tools directly or launch CLI, Docker, and GitOps workbenches from one unified GitHub Pages suite.</p>
       <div class="grid">
         <article class="card">
           <span class="badge">Client-Side PDF</span>
@@ -196,6 +199,36 @@
             <a class="btn" href="./self-healing-deployment/dashboard/">Open Fullscreen</a>
           </div>
         </article>
+
+        <article class="card">
+          <span class="badge">FastAPI + Ansible</span>
+          <h3>Multi-Cloud Free Tier</h3>
+          <p>Provision and monitor free-tier servers across AWS, GCP, Azure, and Oracle Cloud.</p>
+          <div class="actions">
+            <button class="btn btn-primary" data-launch="multicloud">Open Workbench</button>
+            <a class="btn" href="./panels/multicloud.html">Open Fullscreen</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <span class="badge">Python + TTS</span>
+          <h3>Study Brainrot Generator</h3>
+          <p>Generate short vertical captioned study videos from Wikipedia topics.</p>
+          <div class="actions">
+            <button class="btn btn-primary" data-launch="brainrot">Open Workbench</button>
+            <a class="btn" href="./panels/brainrot.html">Open Fullscreen</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <span class="badge">GitOps / Game Server</span>
+          <h3>Minecraft Server GitOps</h3>
+          <p>Manage a 24/7 Minecraft server declaratively through Git config files and automated backups.</p>
+          <div class="actions">
+            <button class="btn btn-primary" data-launch="minecraft">Open Workbench</button>
+            <a class="btn" href="./panels/minecraft.html">Open Fullscreen</a>
+          </div>
+        </article>
       </div>
     </section>
 
@@ -212,7 +245,10 @@
     const TOOLS = {
       pdf: { label: "Browser PDF Tools", path: "./browser-pdf-tools/" },
       doc2md: { label: "Doc2MD Converter", path: "./doc2md-action/site/" },
-      deploy: { label: "Self-Healing Deployment Dashboard", path: "./self-healing-deployment/dashboard/" }
+      deploy: { label: "Self-Healing Deployment Dashboard", path: "./self-healing-deployment/dashboard/" },
+      multicloud: { label: "Multi-Cloud Free Tier Workbench", path: "./panels/multicloud.html" },
+      brainrot: { label: "Study Brainrot Generator Workbench", path: "./panels/brainrot.html" },
+      minecraft: { label: "Minecraft Server GitOps Workbench", path: "./panels/minecraft.html" }
     };
 
     const launcher = document.getElementById("launcher");

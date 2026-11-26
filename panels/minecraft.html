@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minecraft Server GitOps — DevShed</title>
+  <style>
+    :root { color-scheme: dark light; --bg:#0b0f17; --card:#121826; --border:#243047; --text:#e6edf7; --muted:#93a4bf; --accent:#3b82f6; }
+    @media (prefers-color-scheme: light) { :root { --bg:#f6f8fb; --card:#fff; --border:#dbe2ee; --text:#0f172a; --muted:#475569; --accent:#2563eb; } }
+    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:2rem; max-width:920px; margin-inline:auto; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
+    h1 { margin-top:0; } p { color:var(--muted); line-height:1.5; }
+    pre { background:var(--bg); border:1px solid var(--border); padding:0.9rem; border-radius:8px; overflow:auto; font-size:0.85rem; max-height:320px; }
+    a.btn { display:inline-block; padding:0.5rem 0.9rem; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; font-size:0.875rem; margin-right:0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Minecraft Server GitOps</h1>
+  <p>Run a 24/7 Minecraft server controlled by editing config files in Git. Pushes sync configuration and trigger automated backups.</p>
+  <div class="card">
+    <h3>Live <code>server.properties</code> from Repository</h3>
+    <pre id="props">Loading server.properties...</pre>
+    <a class="btn" href="https://github.com/Srinivasan-78/devshed/tree/main/minecraft-server-gitops/config" target="_blank" rel="noopener">Edit Configs on GitHub ↗</a>
+    <a class="btn" href="https://github.com/Srinivasan-78/devshed/tree/main/minecraft-server-gitops/.github/workflows" target="_blank" rel="noopener">View Workflows ↗</a>
+  </div>
+  <script>
+    fetch("../minecraft-server-gitops/config/server.properties")
+      .then(r => r.ok ? r.text() : Promise.reject())
+      .then(t => { document.getElementById("props").textContent = t; })
+      .catch(() => { document.getElementById("props").textContent = "Unable to load config/server.properties."; });
+  </script>
+</body>
+</html>
