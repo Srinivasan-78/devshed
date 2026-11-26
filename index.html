@@ -1,0 +1,250 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevShed — 3-in-1 Developer &amp; Ops Workbench</title>
+  <style>
+    :root {
+      color-scheme: dark light;
+      --bg: #0b0f17;
+      --surface: #121826;
+      --surface-hover: #1a2235;
+      --border: #243047;
+      --text: #e6edf7;
+      --muted: #93a4bf;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.14);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f8fb;
+        --surface: #ffffff;
+        --surface-hover: #f0f4fa;
+        --border: #dbe2ee;
+        --text: #0f172a;
+        --muted: #475569;
+        --accent: #2563eb;
+        --accent-soft: rgba(37, 99, 235, 0.1);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: var(--surface);
+    }
+    .brand { display: flex; align-items: baseline; gap: 0.75rem; }
+    .brand h1 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; }
+    .brand span { color: var(--muted); font-size: 0.9rem; }
+    .tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tab {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .tab:hover { background: var(--surface-hover); }
+    .tab.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    main { flex: 1; display: flex; flex-direction: column; }
+    #launcher {
+      max-width: 1040px;
+      width: 100%;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+    #launcher h2 { margin: 0 0 0.5rem; font-size: 1.75rem; }
+    #launcher p.lead { margin: 0 0 2rem; color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .badge {
+      display: inline-block;
+      width: fit-content;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .card h3 { margin: 0; font-size: 1.15rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.92rem; line-height: 1.5; flex: 1; }
+    .actions { display: flex; gap: 0.6rem; margin-top: 0.5rem; }
+    .btn {
+      padding: 0.55rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: transparent;
+    }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+    .btn:hover { opacity: 0.92; }
+    #workspace {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+    #workspace.open { display: flex; }
+    .toolbar {
+      padding: 0.5rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    iframe {
+      flex: 1;
+      width: 100%;
+      min-height: calc(100vh - 110px);
+      border: 0;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>DevShed</h1>
+      <span>3 utilities under one roof</span>
+    </div>
+    <nav class="tabs" aria-label="Tool switcher">
+      <button class="tab active" data-tool="home">All Tools</button>
+      <button class="tab" data-tool="pdf">PDF Studio</button>
+      <button class="tab" data-tool="doc2md">Doc2MD</button>
+      <button class="tab" data-tool="deploy">Self-Healing Deploy</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="launcher">
+      <h2>Choose a tool to run</h2>
+      <p class="lead">Run everything client-side or inspect live deployment telemetry from one unified GitHub Pages suite.</p>
+      <div class="grid">
+        <article class="card">
+          <span class="badge">Client-Side PDF</span>
+          <h3>Browser PDF Tools</h3>
+          <p>Merge, split, and rearrange PDFs entirely in your browser — files never leave your device.</p>
+          <div class="actions">
+            <button class="btn btn-primary" data-launch="pdf">Run Here</button>
+            <a class="btn" href="./browser-pdf-tools/">Open Fullscreen</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <span class="badge">Converter + Action</span>
+          <h3>Doc2MD</h3>
+          <p>Convert HTML, DOCX, CSV, and text documents to clean Markdown in the browser or via GitHub Action.</p>
+          <div class="actions">
+            <button class="btn btn-primary" data-launch="doc2md">Run Here</button>
+            <a class="btn" href="./doc2md-action/site/">Open Fullscreen</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <span class="badge">SRE / Blue-Green</span>
+          <h3>Self-Healing Deployment</h3>
+          <p>Inspect blue/green deployment health checks, release history, and automated rollback events.</p>
+          <div class="actions">
+            <button class="btn btn-primary" data-launch="deploy">Run Here</button>
+            <a class="btn" href="./self-healing-deployment/dashboard/">Open Fullscreen</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="workspace" aria-live="polite">
+      <div class="toolbar">
+        <span id="active-label">Running tool</span>
+        <a id="fullscreen-link" class="btn" href="./" target="_blank" rel="noopener">Open in New Tab ↗</a>
+      </div>
+      <iframe id="tool-frame" title="Active DevShed Tool"></iframe>
+    </section>
+  </main>
+
+  <script>
+    const TOOLS = {
+      pdf: { label: "Browser PDF Tools", path: "./browser-pdf-tools/" },
+      doc2md: { label: "Doc2MD Converter", path: "./doc2md-action/site/" },
+      deploy: { label: "Self-Healing Deployment Dashboard", path: "./self-healing-deployment/dashboard/" }
+    };
+
+    const launcher = document.getElementById("launcher");
+    const workspace = document.getElementById("workspace");
+    const frame = document.getElementById("tool-frame");
+    const activeLabel = document.getElementById("active-label");
+    const fullscreenLink = document.getElementById("fullscreen-link");
+    const tabs = document.querySelectorAll(".tab");
+
+    function selectTool(key) {
+      tabs.forEach(t => t.classList.toggle("active", t.dataset.tool === key));
+      if (key === "home" || !TOOLS[key]) {
+        workspace.classList.remove("open");
+        launcher.style.display = "block";
+        frame.src = "about:blank";
+        history.replaceState(null, "", "#");
+        return;
+      }
+      const tool = TOOLS[key];
+      launcher.style.display = "none";
+      workspace.classList.add("open");
+      activeLabel.textContent = tool.label;
+      fullscreenLink.href = tool.path;
+      frame.src = tool.path;
+      history.replaceState(null, "", "#" + key);
+    }
+
+    tabs.forEach(t => t.addEventListener("click", () => selectTool(t.dataset.tool)));
+    document.querySelectorAll("[data-launch]").forEach(b => b.addEventListener("click", () => selectTool(b.dataset.launch)));
+
+    const initial = location.hash.replace("#", "");
+    if (TOOLS[initial]) selectTool(initial);
+  </script>
+</body>
+</html>
