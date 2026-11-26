@@ -1,4 +1,4 @@
-﻿name: Deploy DevShed Pages
+name: Deploy DevShed Pages
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
           cp -r self-healing-deployment/dashboard/* _site/self-healing-deployment/dashboard/
           cp -r self-healing-deployment/deployment_log/* _site/self-healing-deployment/deployment_log/
           cp -r minecraft-server-gitops/config/* _site/minecraft-server-gitops/config/
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
