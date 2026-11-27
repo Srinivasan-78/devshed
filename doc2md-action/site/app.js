@@ -233,7 +233,7 @@ function rowsToMarkdownTable(rows) {
   }
 
   const cell = (row, column) =>
-    String(row[column] ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+    String(row[column] ?? "").replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
 
   const [head, ...body] = trimmed;
   return [

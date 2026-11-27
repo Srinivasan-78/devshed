@@ -84,7 +84,7 @@
     const copyBtn = document.getElementById("copy-btn");
 
     function update() {
-      const t = (topic.value || "TCP/IP").replace(/"/g, '\\"');
+      const t = (topic.value || "TCP/IP").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
       const g = bg.value;
       const lines = [
         "cd study-brainrot-generator",
