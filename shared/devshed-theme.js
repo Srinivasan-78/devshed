@@ -63,8 +63,11 @@
   });
 
   window.addEventListener("message", (e) => {
+    if (e.origin !== window.location.origin) return;
     if (e.data && e.data.type === "devshed-color-scheme") {
-      applyContent(e.data.content || "light dark");
+      const allowed = ["light", "dark", "light dark"];
+      const content = allowed.includes(e.data.content) ? e.data.content : "light dark";
+      applyContent(content);
     }
   });
 
