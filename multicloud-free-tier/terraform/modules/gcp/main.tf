@@ -45,8 +45,13 @@ variable "gcp_service_account_json" {
   sensitive = true
 }
 
+variable "deployment_name" {
+  type    = string
+  default = "multicloud-portfolio-demo"
+}
+
 resource "google_compute_instance" "demo" {
-  name         = "multicloud-portfolio-demo"
+  name         = var.deployment_name
   machine_type = var.machine_type
   zone         = var.zone
 

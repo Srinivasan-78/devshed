@@ -1,6 +1,7 @@
 ---
 - name: Look up the last-known-good container
-  command: docker ps -aq --filter name=^{{ app_name }}-previous$
+  command:
+    argv: [docker, ps, -aq, --filter, "name=^{{ app_name }}-previous$"]
   register: previous_container
   failed_when: false
   changed_when: false
@@ -9,7 +10,8 @@
 # the old version is still serving on the active port and removing it here
 # would turn a failed build into an outage.
 - name: Stop and remove the failed active container
-  command: docker rm -f {{ app_name }}-active
+  command:
+    argv: [docker, rm, -f, "{{ app_name }}-active"]
   when: (previous_container.stdout | trim | length > 0)
         or (deploy_touched_containers | default(true) | bool)
   failed_when: false
@@ -19,11 +21,13 @@
   when: previous_container.stdout | trim | length > 0
   block:
     - name: Rename previous container back to active
-      command: docker rename {{ app_name }}-previous {{ app_name }}-active
+      command:
+        argv: [docker, rename, "{{ app_name }}-previous", "{{ app_name }}-active"]
       changed_when: true
 
     - name: Start restored container
-      command: docker start {{ app_name }}-active
+      command:
+        argv: [docker, start, "{{ app_name }}-active"]
       register: start_restored
       failed_when: false
       changed_when: start_restored.rc == 0

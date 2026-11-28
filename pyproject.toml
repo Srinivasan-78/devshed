@@ -1,0 +1,13 @@
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+testpaths = [
+  "browser-pdf-tools/tests",
+  "doc2md-action/tests",
+  "multicloud-free-tier/tests",
+  "self-healing-deployment/tests",
+  "study-brainrot-generator/tests",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120

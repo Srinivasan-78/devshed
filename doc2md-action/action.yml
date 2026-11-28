@@ -9,7 +9,7 @@ inputs:
   files:
     description: "Glob patterns of input files, newline or comma separated. Example: docs/**/*.pdf"
     required: false
-    default: "**/*.{pdf,docx,doc,xlsx,xls,pptx,ppt,png,jpg,jpeg,tif,tiff,bmp,webp,html,htm,csv,txt}"
+    default: "**/*.{pdf,docx,doc,xlsx,xlsm,xls,pptx,ppt,png,jpg,jpeg,tif,tiff,bmp,webp,gif,html,htm,xml,json,epub,zip,csv,tsv,txt,md,markdown,rst,log}"
   output-dir:
     description: "Directory where Markdown files are written."
     required: false
@@ -74,9 +74,9 @@ runs:
   using: "composite"
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7
       with:
-        python-version: "3.11"
+        python-version: "3.12"
 
     - name: Install system dependencies
       shell: bash
@@ -101,11 +101,10 @@ runs:
         sudo apt-get install -y -qq --no-install-recommends "${packages[@]}"
 
     - name: Cache pip
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
       with:
         path: ~/.cache/pip
-        # hashFiles cannot read outside the workspace, so the key tracks the action version.
-        key: doc2md-v1-${{ runner.os }}-py3.11
+        key: doc2md-v2-${{ runner.os }}-py3.12-${{ hashFiles('doc2md-action/requirements.txt', 'requirements.txt') }}
 
     - name: Install Python dependencies
       shell: bash

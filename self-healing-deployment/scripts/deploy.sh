@@ -37,8 +37,13 @@ if ! docker run -d --name "$APP_NAME-active" -p "$HOST_PORT:$CONTAINER_PORT" \
   "$IMAGE_NAME:$TARGET_VERSION" >/dev/null; then
   echo "Container start failed! Restoring previous version..."
   docker rm -f "$APP_NAME-active" 2>/dev/null || true
-  docker rename "$APP_NAME-previous" "$APP_NAME-active" 2>/dev/null && docker start "$APP_NAME-active" >/dev/null || true
-  python3 "$ROOT_DIR/scripts/log_event.py" --status rollback --version "$TARGET_VERSION" --log-path "$LOG_PATH" --reason "container_start_failed"
+  if docker ps -aq --filter "name=^/${APP_NAME}-previous$" | grep -q .; then
+    docker rename "$APP_NAME-previous" "$APP_NAME-active"
+    docker start "$APP_NAME-active" >/dev/null
+    python3 "$ROOT_DIR/scripts/log_event.py" --status rollback --version "$TARGET_VERSION" --log-path "$LOG_PATH" --reason "container_start_failed"
+  else
+    python3 "$ROOT_DIR/scripts/log_event.py" --status failed --version "$TARGET_VERSION" --log-path "$LOG_PATH" --reason "container_start_failed; no last-known-good"
+  fi
   exit 1
 fi
 

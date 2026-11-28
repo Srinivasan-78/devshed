@@ -125,3 +125,10 @@
       ansible.builtin.include_tasks: rescue.yml
       vars:
         failure_action: provision
+
+  always:
+    - name: Remove plaintext terraform.tfvars.json from workspace
+      ansible.builtin.file:
+        path: "{{ workspace }}/terraform.tfvars.json"
+        state: absent
+      when: workspace is defined

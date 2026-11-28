@@ -47,7 +47,13 @@
 <body>
   <div class="ds-standalone-bar ds-standalone-only">
     <a href="../#minecraft">&larr; Back to DevShed</a>
-    <span>06 // MINECRAFT SERVER GITOPS</span>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <span>06 // MINECRAFT SERVER GITOPS</span>
+      <button id="theme-toggle" class="ds-btn" type="button" aria-label="Toggle color theme" style="padding:0.25rem 0.6rem;font-size:0.72rem">
+        <span class="theme-opt-light">&#9632; Dark</span>
+        <span class="theme-opt-dark">&#9633; Light</span>
+      </button>
+    </div>
   </div>
 
   <main class="ds-page">
@@ -67,6 +73,7 @@
         <button type="button" role="tab" class="ftab" data-file="banned-players.json" aria-selected="false" tabindex="-1">banned-players.json</button>
       </div>
       <div role="tabpanel" id="config-panel" aria-label="Selected configuration file" tabindex="0">
+        <p id="uuid-warn" style="display:none;margin:0 0 0.6rem;color:var(--c-alarm);font-family:var(--font-mono);font-size:0.8rem">⚠ Placeholder UUID 00000000-0000-0000-0000-000000000000 detected — sync-config.sh will block deploy until replaced.</p>
         <pre id="props" class="ds-pre">Loading server.properties...</pre>
       </div>
       <div class="ds-actions">
@@ -77,7 +84,11 @@
   </main>
 
   <script>
+    document.getElementById("theme-toggle")?.addEventListener("click", () => {
+      if (window.DevShedTheme) window.DevShedTheme.toggleTheme();
+    });
     const propsEl = document.getElementById("props");
+    const uuidWarn = document.getElementById("uuid-warn");
     const tablist = document.querySelector('[role="tablist"]');
     const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 
@@ -88,10 +99,15 @@
         t.tabIndex = selected ? 0 : -1;
       });
       propsEl.textContent = `Loading ${filename}...`;
+      uuidWarn.style.display = "none";
       try {
         const res = await fetch(`../minecraft-server-gitops/config/${filename}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        propsEl.textContent = await res.text();
+        const text = await res.text();
+        propsEl.textContent = text;
+        if (text.includes("00000000-0000-0000-0000-000000000000")) {
+          uuidWarn.style.display = "block";
+        }
       } catch (err) {
         propsEl.textContent = `Unable to load config/${filename} (${err.message}).`;
       }

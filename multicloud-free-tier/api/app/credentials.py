@@ -12,9 +12,14 @@ from flask import Blueprint, flash, redirect, request, url_for
 from app import db
 from app.crypto import encrypt
 from app.deps import login_required
-from app.free_tier import SUPPORTED_PROVIDERS, normalize_provider
+from app.free_tier import IMPLEMENTED_PROVIDERS, normalize_provider
 
 bp = Blueprint("credentials", __name__)
+
+REQUIRED_CREDENTIAL_KEYS = {
+    "aws": {"aws_access_key_id", "aws_secret_access_key"},
+    "gcp": {"project_id", "gcp_service_account_json"},
+}
 
 
 @bp.post("/credentials")
@@ -22,8 +27,8 @@ bp = Blueprint("credentials", __name__)
 def store(user):
     raw_provider = request.form.get("provider") or ""
     provider = normalize_provider(raw_provider)
-    if provider not in SUPPORTED_PROVIDERS:
-        flash(f"unsupported provider '{raw_provider}'", "error")
+    if provider not in IMPLEMENTED_PROVIDERS:
+        flash(f"provider '{raw_provider}' is not implemented for provisioning", "error")
         return redirect(url_for("resources.dashboard"))
 
     try:
@@ -32,6 +37,11 @@ def store(user):
         payload = None
     if not isinstance(payload, dict):
         flash("credential payload must be a JSON object", "error")
+        return redirect(url_for("resources.dashboard"))
+
+    missing = [k for k in sorted(REQUIRED_CREDENTIAL_KEYS.get(provider, set())) if not str(payload.get(k) or "").strip()]
+    if missing:
+        flash(f"missing required credential keys for {provider}: {', '.join(missing)}", "error")
         return redirect(url_for("resources.dashboard"))
 
     db.execute(

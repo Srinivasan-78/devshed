@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Polls Postgres for work and hands each job to Ansible. Replaces the Celery
-# worker (app/services/tasks.py).
+# Polls Postgres for work and hands each job to Ansible.
 #
 # One row at a time, claimed atomically with FOR UPDATE SKIP LOCKED and a
 # claimed_at stamp, so running two workers never double-runs a job.
@@ -14,13 +13,14 @@ cd "$here/.." || exit 1
 export ANSIBLE_RETRY_FILES_ENABLED=0
 export ANSIBLE_LOCALHOST_WARNING=0
 export ANSIBLE_INVENTORY_UNPARSED_WARNING=0
-export PYTHONPATH="$here/../.."
+export PYTHONPATH="$here/.."
 
 claim_sql="
 UPDATE resources SET claimed_at = now()
 WHERE id = (
     SELECT id FROM resources
-    WHERE claimed_at IS NULL AND status IN ('pending', 'destroying')
+    WHERE (claimed_at IS NULL OR claimed_at < now() - interval '30 minutes')
+      AND status IN ('pending', 'destroying')
     ORDER BY created_at
     FOR UPDATE SKIP LOCKED
     LIMIT 1
@@ -49,10 +49,13 @@ while true; do
     echo "[worker] done $id"
   else
     echo "[worker] FAILED $id"
-    psql -Xq -v id="$id" -c \
-      "UPDATE resources SET status='error',
-         error_message='worker: ansible-playbook run failed',
-         updated_at=now()
-       WHERE id = :'id'" || true
+    psql -Xq -v id="$id" <<'SQL' || true
+UPDATE resources
+   SET status = 'error',
+       error_message = 'worker: ansible-playbook run failed',
+       claimed_at = NULL,
+       updated_at = now()
+ WHERE id = :'id';
+SQL
   fi
 done

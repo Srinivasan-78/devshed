@@ -38,9 +38,12 @@ log "Active jar: $MC_TYPE $resolved"
 
 # Keep the unit's copy of the version in step with the repo.
 if [ -f "$MC_ROOT/server.env" ]; then
-  sed -i -e "s|^MC_TYPE=.*|MC_TYPE=$MC_TYPE|" \
-         -e "s|^MC_VERSION=.*|MC_VERSION=$resolved|" \
-         -e "s|^MC_MEMORY=.*|MC_MEMORY=$MC_MEMORY|" "$MC_ROOT/server.env"
+  _s_type="${MC_TYPE//&/\\&}"; _s_type="${_s_type//|/\\|}"
+  _s_ver="${resolved//&/\\&}"; _s_ver="${_s_ver//|/\\|}"
+  _s_mem="${MC_MEMORY//&/\\&}"; _s_mem="${_s_mem//|/\\|}"
+  sed -i -e "s|^MC_TYPE=.*|MC_TYPE=$_s_type|" \
+         -e "s|^MC_VERSION=.*|MC_VERSION=$_s_ver|" \
+         -e "s|^MC_MEMORY=.*|MC_MEMORY=$_s_mem|" "$MC_ROOT/server.env"
 fi
 
 if [ "$MC_RESTART" = true ] && service_active; then

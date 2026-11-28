@@ -32,7 +32,7 @@ TEXT_EXTS = {".txt", ".md", ".markdown", ".rst", ".log"}
 LEGACY_OFFICE = {".doc": ".docx", ".ppt": ".pptx", ".xls": ".xlsx"}
 
 DEFAULT_PATTERN = (
-    "**/*.{pdf,docx,doc,xlsx,xls,pptx,ppt,png,jpg,jpeg,tif,tiff,bmp,webp,html,htm,csv,txt}"
+    "**/*.{pdf,docx,doc,xlsx,xlsm,xls,pptx,ppt,png,jpg,jpeg,tif,tiff,bmp,webp,gif,html,htm,xml,json,epub,zip,csv,tsv,txt,md,markdown,rst,log}"
 )
 
 # Directories that never contain user documents worth converting.
@@ -228,29 +228,30 @@ def convert_pdf(path: Path, cfg: Config, result: Result) -> str:
         import fitz
 
     doc = fitz.open(path)
-    result.pages = doc.page_count
-    pages: list[str] = []
-    zoom = cfg.ocr_dpi / 72.0
+    try:
+        result.pages = doc.page_count
+        pages: list[str] = []
+        zoom = max(cfg.ocr_dpi, 72) / 72.0
 
-    for page in doc:
-        text = page.get_text("text").strip()
-        needs_ocr = cfg.ocr == "always" or (
-            cfg.ocr == "auto" and len(text) < cfg.min_chars_per_page
-        )
-        if needs_ocr and tesseract_available():
-            pixmap = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
-            ocr_text = ocr_image_bytes(pixmap.tobytes("png"), cfg)
-            # Keep whichever extraction actually produced more content.
-            if len(ocr_text) > len(text):
-                text = ocr_text
-                result.ocr_used = True
-        elif needs_ocr:
-            warning = "tesseract not installed, OCR skipped"
-            if warning not in result.warnings:
-                result.warnings.append(warning)
-        pages.append(text)
-
-    doc.close()
+        for page in doc:
+            text = page.get_text("text").strip()
+            needs_ocr = cfg.ocr == "always" or (
+                cfg.ocr == "auto" and len(text) < cfg.min_chars_per_page
+            )
+            if needs_ocr and tesseract_available():
+                pixmap = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+                ocr_text = ocr_image_bytes(pixmap.tobytes("png"), cfg)
+                # Keep whichever extraction actually produced more content.
+                if len(ocr_text) > len(text):
+                    text = ocr_text
+                    result.ocr_used = True
+            elif needs_ocr:
+                warning = "tesseract not installed, OCR skipped"
+                if warning not in result.warnings:
+                    result.warnings.append(warning)
+            pages.append(text)
+    finally:
+        doc.close()
 
     if cfg.compact:
         pages = strip_repeated_lines(pages)
@@ -363,19 +364,26 @@ def output_path_for(source: Path, cfg: Config, used: set[Path]) -> Path:
         relative = source.relative_to(Path.cwd())
     except ValueError:
         relative = Path(source.name)
-    candidate = cfg.output_dir / relative.with_suffix(".md")
+    base = cfg.output_dir / relative.with_suffix(".md")
+    candidate = base
     # Two inputs may differ only by extension, so disambiguate collisions.
     counter = 2
     while candidate in used:
-        candidate = candidate.with_name(f"{candidate.stem}-{counter}.md")
+        candidate = base.with_name(f"{base.stem}-{counter}.md")
         counter += 1
     used.add(candidate)
     return candidate
 
 
 def yaml_quote(value: str) -> str:
-    """Quote a scalar so colons, quotes and hashes in a path stay valid YAML."""
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    """Quote a scalar so colons, quotes, newlines and hashes in a path stay valid YAML."""
+    escaped = (
+        value.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\r", "\\r")
+        .replace("\n", "\\n")
+    )
+    return '"' + escaped + '"'
 
 
 def front_matter(source: Path, result: Result) -> str:
@@ -437,8 +445,9 @@ def write_summary(results: list[Result], total_tokens: int, saved_pct: float) ->
         "| --- | --- | ---: | :-: | ---: | --- |",
     ]
     for r in results:
+        safe_src = r.source.replace("|", "\\|").replace("`", "\\`")
         lines.append(
-            f"| `{r.source}` | {r.kind or '-'} | {r.pages or '-'} | "
+            f"| `{safe_src}` | {r.kind or '-'} | {r.pages or '-'} | "
             f"{'yes' if r.ocr_used else 'no'} | {r.approx_tokens or '-'} | {r.status} |"
         )
     with open(target, "a", encoding="utf-8") as handle:

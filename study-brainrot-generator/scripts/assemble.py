@@ -205,10 +205,11 @@ def make_segment(index, audio_path, boundaries_path, bg_list, out_path, trim=0.0
     ass_path = f"{SEGMENTS_DIR}/chunk_{index:02d}.ass"
     build_ass(boundaries, ass_path, offset=LEAD_IN)
 
+    ass_filter = ass_path.replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
     vf = (
         f"trim=start={trim:.3f},setpts=PTS-STARTPTS,"
         "scale=1080:1920:force_original_aspect_ratio=increase,"
-        f"crop=1080:1920,ass={ass_path}"
+        f"crop=1080:1920,ass='{ass_filter}'"
     )
     af = (
         f"adelay={int(LEAD_IN * 1000)}:all=1,"

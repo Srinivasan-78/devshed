@@ -103,7 +103,7 @@ Notice the order: **it backs up before it touches anything.** If a change turns 
 ## What's in this repository
 
 ```
-Minecraft_Server_Setup/
+minecraft-server-gitops/
 │
 ├── config/                    👈 THE PART YOU EDIT
 │   ├── server.env             which Minecraft, which version, how much memory

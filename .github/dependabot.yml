@@ -1,14 +1,5 @@
 version: 2
 updates:
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    groups:
-      docker-dependencies:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -18,3 +9,41 @@ updates:
       github-actions-dependencies:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+
+  - package-ecosystem: "docker"
+    directories:
+      - "/browser-pdf-tools"
+      - "/multicloud-free-tier/api"
+      - "/self-healing-deployment/app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      docker-dependencies:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "pip"
+    directories:
+      - "/browser-pdf-tools"
+      - "/doc2md-action"
+      - "/multicloud-free-tier/api"
+      - "/self-healing-deployment/app"
+      - "/study-brainrot-generator"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      pip-dependencies:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "terraform"
+    directories:
+      - "/multicloud-free-tier/terraform/modules/aws"
+      - "/multicloud-free-tier/terraform/modules/gcp"
+      - "/multicloud-free-tier/terraform/modules/azure"
+      - "/multicloud-free-tier/terraform/modules/oracle"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10

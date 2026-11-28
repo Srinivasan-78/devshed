@@ -10,14 +10,22 @@
         name: deploy
 
     - name: Run health validation gate
-      command: >
-        python3 {{ playbook_dir }}/../healthcheck/validate.py
-        --url http://localhost:{{ host_port_active }}{{ health_endpoint }}
-        --retries {{ health_retries }}
-        --delay {{ health_delay_seconds }}
-        --timeout {{ health_timeout_seconds }}
-        --backoff {{ health_backoff }}
-        --max-response-ms {{ health_max_response_ms }}
+      command:
+        argv:
+          - python3
+          - "{{ playbook_dir }}/../healthcheck/validate.py"
+          - --url
+          - "http://localhost:{{ host_port_active }}{{ health_endpoint }}"
+          - --retries
+          - "{{ health_retries }}"
+          - --delay
+          - "{{ health_delay_seconds }}"
+          - --timeout
+          - "{{ health_timeout_seconds }}"
+          - --backoff
+          - "{{ health_backoff }}"
+          - --max-response-ms
+          - "{{ health_max_response_ms }}"
       register: health_result
       when: deploy_started_ok | bool
       failed_when: false
@@ -37,15 +45,22 @@
       when: deployment_healthy | bool
       block:
         - name: Remove now-unneeded previous container
-          command: docker rm -f {{ app_name }}-previous
+          command:
+            argv: [docker, rm, -f, "{{ app_name }}-previous"]
           failed_when: false
           changed_when: true
 
         - name: Append success event to deployment log
-          command: >
-            python3 {{ playbook_dir }}/../scripts/log_event.py
-            --status success --version {{ target_version }}
-            --log-path {{ deployment_log_path }}
+          command:
+            argv:
+              - python3
+              - "{{ playbook_dir }}/../scripts/log_event.py"
+              - --status
+              - success
+              - --version
+              - "{{ target_version }}"
+              - --log-path
+              - "{{ deployment_log_path }}"
           changed_when: false
 
     - name: Deployment unhealthy — trigger rollback

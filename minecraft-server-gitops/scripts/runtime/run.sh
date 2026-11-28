@@ -19,7 +19,9 @@ server=$!
 
 # systemd sends TERM on `stop`; turn that into a clean in-game shutdown.
 terminate() {
-  printf 'stop\n' > console.in
+  if kill -0 "$server" 2>/dev/null; then
+    timeout 2 bash -c "printf 'stop\n' > console.in" 2>/dev/null || kill -TERM "$server" 2>/dev/null || true
+  fi
   wait "$server"
 }
 trap terminate TERM INT

@@ -4,9 +4,8 @@
     deploy_started_at: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
 
 - name: Build image for target version
-  command: >
-    docker build -t {{ image_name }}:{{ target_version }}
-    {{ playbook_dir }}/../app
+  command:
+    argv: [docker, build, -t, "{{ image_name }}:{{ target_version }}", "{{ playbook_dir }}/../app"]
   register: build_result
   failed_when: false
   changed_when: build_result.rc == 0
@@ -14,13 +13,15 @@
 # Only touch existing containers once we know we have an image to deploy.
 # A failed build must leave the currently-serving version completely alone.
 - name: Remove stale "previous" slot left over from an earlier rollback
-  command: docker rm -f {{ app_name }}-previous
+  command:
+    argv: [docker, rm, -f, "{{ app_name }}-previous"]
   when: build_result.rc == 0
   failed_when: false
   changed_when: false
 
 - name: Look up the currently active container
-  command: docker ps -aq --filter name=^{{ app_name }}-active$
+  command:
+    argv: [docker, ps, -aq, --filter, "name=^{{ app_name }}-active$"]
   register: active_container
   failed_when: false
   changed_when: false
@@ -34,22 +35,31 @@
     - active_container.stdout | trim | length > 0
   block:
     - name: Stop active container so it releases the active port
-      command: docker stop {{ app_name }}-active
+      command:
+        argv: [docker, stop, "{{ app_name }}-active"]
       failed_when: false
       changed_when: true
 
     - name: Rename active container to "previous"
-      command: docker rename {{ app_name }}-active {{ app_name }}-previous
+      command:
+        argv: [docker, rename, "{{ app_name }}-active", "{{ app_name }}-previous"]
       changed_when: true
 
 - name: Start new version on active port
-  command: >
-    docker run -d
-    --name {{ app_name }}-active
-    -p {{ host_port_active }}:{{ container_port }}
-    -e APP_VERSION={{ target_version }}
-    -e FORCE_FAIL={{ force_fail }}
-    {{ image_name }}:{{ target_version }}
+  command:
+    argv:
+      - docker
+      - run
+      - -d
+      - --name
+      - "{{ app_name }}-active"
+      - -p
+      - "{{ host_port_active }}:{{ container_port }}"
+      - -e
+      - "APP_VERSION={{ target_version }}"
+      - -e
+      - "FORCE_FAIL={{ force_fail }}"
+      - "{{ image_name }}:{{ target_version }}"
   register: start_new
   when: build_result.rc == 0
   failed_when: false

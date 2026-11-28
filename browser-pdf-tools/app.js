@@ -9,10 +9,22 @@ function initLibraries() {
 }
 initLibraries();
 
-// URL of the FastAPI + PyMuPDF backend (see /backend). Required only for the
-// "Edit Text" tool, which needs real font extraction/content-stream editing
-// that isn't feasible purely client-side. Leave empty to disable that tool.
-const BACKEND_URL = ""; // e.g. "https://your-backend.example.com"
+const BACKEND_STORAGE_KEY = "devshed-pdf-backend-url";
+function getBackendUrl() {
+  try {
+    return (localStorage.getItem(BACKEND_STORAGE_KEY) || "").replace(/\/+$/, "");
+  } catch (e) {
+    return "";
+  }
+}
+const BACKEND_URL = getBackendUrl();
+
+const themeBtn = document.getElementById('theme-toggle');
+if (themeBtn) {
+  themeBtn.addEventListener('click', () => {
+    if (window.DevShedTheme) window.DevShedTheme.toggleTheme();
+  });
+}
 
 const $ = id => document.getElementById(id);
 
@@ -103,7 +115,7 @@ dropzone.addEventListener('click', (e)=> {
 });
 ['dragenter','dragover'].forEach(ev=> dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=> dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.classList.remove('drag');}));
-dropzone.addEventListener('drop', e=> handleFiles([...e.dataTransfer.files].filter(f=>f.type==='application/pdf')));
+dropzone.addEventListener('drop', e=> handleFiles([...e.dataTransfer.files].filter(f=>f.type==='application/pdf'||f.type==='application/x-pdf'||f.name.toLowerCase().endsWith('.pdf'))));
 $('fileInput').addEventListener('change', e=> handleFiles([...e.target.files]));
 
 async function handleFiles(files){
@@ -158,10 +170,24 @@ async function enterWorkspace(){
   if (state.tool.id === 'edit'){
     const hint = document.createElement('span');
     hint.className='status';
-    hint.textContent = BACKEND_URL
-      ? 'Click a thumbnail, then click existing text on the page to change it. Replacements reuse the PDF\'s real font where possible.'
-      : 'Edit Text needs a backend configured (BACKEND_URL in app.js) — see browser-pdf-tools/main.py.';
-    toolbar.appendChild(hint);
+    const currentUrl = getBackendUrl();
+    hint.textContent = currentUrl
+      ? `Backend: ${currentUrl} — click a thumbnail, then click existing text to edit.`
+      : 'Edit Text needs a local/self-hosted FastAPI backend (browser-pdf-tools/main.py).';
+    const cfgBtn = document.createElement('button');
+    cfgBtn.className = 'btn secondary small';
+    cfgBtn.type = 'button';
+    cfgBtn.textContent = currentUrl ? 'Change Backend URL' : 'Set Backend URL';
+    cfgBtn.onclick = () => {
+      const next = prompt('Enter PDF backend URL (e.g. http://localhost:8000), or leave empty to clear:', getBackendUrl());
+      if (next === null) return;
+      try {
+        if (next.trim()) localStorage.setItem(BACKEND_STORAGE_KEY, next.trim());
+        else localStorage.removeItem(BACKEND_STORAGE_KEY);
+      } catch (e) {}
+      enterWorkspace();
+    };
+    toolbar.append(hint, cfgBtn);
   }
   if (state.tool.id === 'remove' || state.tool.id === 'extract'){
     const hint = document.createElement('span');
@@ -187,7 +213,7 @@ function buildFileList(){
     const nameEl = document.createElement('span');
     nameEl.textContent = f.name;
     const hintEl = document.createElement('span');
-    hintEl.style.color = 'var(--muted)';
+    hintEl.style.color = 'var(--c-mute)';
     hintEl.style.fontSize = '12px';
     hintEl.textContent = 'drag to reorder';
     li.append(nameEl, hintEl);
@@ -304,8 +330,9 @@ async function renderPageToCanvas(pageIndex, canvas, scale = 1.6){
 
 // --- Edit Text tool: click existing text runs (from the backend) and change them in place ---
 async function openEditTextEditor(pos){
-  if (!BACKEND_URL){
-    $('workspaceStatus').textContent = 'Edit Text needs a backend configured (BACKEND_URL in app.js).';
+  const backendUrl = getBackendUrl();
+  if (!backendUrl){
+    $('workspaceStatus').textContent = 'Edit Text needs a backend URL configured (click "Set Backend URL").';
     return;
   }
   const origIdx = state.pageOrder[pos];
@@ -328,7 +355,7 @@ async function openEditTextEditor(pos){
   form.append('page', origIdx);
   let inspectResult;
   try{
-    const res = await fetch(`${BACKEND_URL}/api/inspect`, { method:'POST', body: form });
+    const res = await fetch(`${backendUrl}/api/inspect`, { method:'POST', body: form });
     if (!res.ok) throw new Error(`backend returned ${res.status}`);
     inspectResult = await res.json();
   } catch(err){
@@ -379,6 +406,7 @@ async function openTextEditor(pos){
   const origIdx = state.pageOrder[pos];
   const scale = 1.4;
   const canvas = $('editorCanvas');
+  $('textLayer').innerHTML = '';
   await renderPageToCanvas(origIdx, canvas, scale);
   $('editorCanvasWrap').classList.remove('hidden');
   $('editorCanvasWrap').scrollIntoView({behavior:'smooth'});
@@ -426,8 +454,8 @@ $('processBtn').addEventListener('click', async ()=>{
       case 'numbers': { outBytes = await doPageNumbers(); filename='numbered.pdf'; break; }
       case 'text': { outBytes = await doAddText(); filename='edited.pdf'; break; }
       case 'edit': {
-        if (!BACKEND_URL) {
-          $('workspaceStatus').textContent = 'Edit Text needs a backend configured (BACKEND_URL in app.js).';
+        if (!getBackendUrl()) {
+          $('workspaceStatus').textContent = 'Edit Text needs a backend URL configured (click "Set Backend URL").';
           return;
         }
         outBytes = await doEditText();
@@ -464,11 +492,16 @@ async function doSplit(){
   return zip.generateAsync({type:'uint8array'});
 }
 
-async function copyOrderTo(order){
+async function cloneDocForOrder(order){
   if (!order.length) throw new Error('Select at least one page to keep.');
   const out = await PDFDocument.create();
   const pages = await out.copyPages(state.pdfDoc, order);
   pages.forEach(p=> out.addPage(p));
+  return out;
+}
+
+async function copyOrderTo(order){
+  const out = await cloneDocForOrder(order);
   return out.save();
 }
 
@@ -483,33 +516,38 @@ async function doReorder(){
 }
 
 async function doRotate(){
-  state.pageOrder.forEach(origIdx=>{
+  const out = await cloneDocForOrder(state.pageOrder);
+  state.pageOrder.forEach((origIdx, outIdx)=>{
     const delta = state.rotationDelta[origIdx]||0;
     if (!delta) return;
-    const page = state.pdfDoc.getPage(origIdx);
+    const page = out.getPage(outIdx);
     page.setRotation(degrees((page.getRotation().angle + delta) % 360));
   });
-  return copyOrderTo(state.pageOrder);
+  return out.save();
 }
 
 async function doPageNumbers(){
-  state.pageOrder.forEach((origIdx,i)=>{
-    const page = state.pdfDoc.getPage(origIdx);
+  const out = await cloneDocForOrder(state.pageOrder);
+  state.pageOrder.forEach((_, outIdx)=>{
+    const page = out.getPage(outIdx);
     const { width } = page.getSize();
-    page.drawText(String(i+1), { x: width/2 - 4, y: 20, size: 12, color: rgb(0,0,0) });
+    page.drawText(String(outIdx+1), { x: width/2 - 4, y: 20, size: 12, color: rgb(0,0,0) });
   });
-  return copyOrderTo(state.pageOrder);
+  return out.save();
 }
 
 async function doAddText(){
-  Object.entries(state.texts).forEach(([origIdx, items])=>{
-    const page = state.pdfDoc.getPage(parseInt(origIdx));
+  const out = await cloneDocForOrder(state.pageOrder);
+  state.pageOrder.forEach((origIdx, outIdx)=>{
+    const items = state.texts[origIdx];
+    if (!items || !items.length) return;
+    const page = out.getPage(outIdx);
     const pageHeight = page.getHeight();
     items.forEach(t=>{
       page.drawText(t.text, { x: t.x/t.scale, y: pageHeight - t.y/t.scale, size: 14, color: rgb(0,0,0) });
     });
   });
-  return copyOrderTo(state.pageOrder);
+  return out.save();
 }
 
 async function doEditText(){
@@ -522,7 +560,7 @@ async function doEditText(){
   const form = new FormData();
   form.append('file', state.files[0]);
   form.append('edits', JSON.stringify(flatEdits));
-  const res = await fetch(`${BACKEND_URL}/api/apply-edits`, { method:'POST', body: form });
+  const res = await fetch(`${getBackendUrl()}/api/apply-edits`, { method:'POST', body: form });
   if (!res.ok) throw new Error(`backend returned ${res.status}`);
   const blob = await res.blob();
   return new Uint8Array(await blob.arrayBuffer());

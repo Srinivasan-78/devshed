@@ -42,16 +42,20 @@ log "Installing runtime scripts"
 install -o "$MC_USER" -g "$MC_USER" -m 750 "$REPO_DIR/scripts/runtime/run.sh" "$MC_ROOT/bin/run.sh"
 
 log "Writing $MC_ROOT/server.env"
+_escaped_java_args="${MC_JAVA_ARGS//\\/\\\\}"
+_escaped_java_args="${_escaped_java_args//\"/\\\"}"
 cat > "$MC_ROOT/server.env" <<EOF
 MC_TYPE=$MC_TYPE
 MC_VERSION=$MC_VERSION
 MC_MEMORY=$MC_MEMORY
-MC_JAVA_ARGS="$MC_JAVA_ARGS"
+MC_JAVA_ARGS="$_escaped_java_args"
 EOF
 chown "$MC_USER:$MC_USER" "$MC_ROOT/server.env"
 
 log "Installing systemd unit"
-sed -e "s|__MC_ROOT__|$MC_ROOT|g" -e "s|__MC_USER__|$MC_USER|g" \
+_sed_root="${MC_ROOT//\\/\\\\}"; _sed_root="${_sed_root//&/\\&}"; _sed_root="${_sed_root//|/\\|}"
+_sed_user="${MC_USER//\\/\\\\}"; _sed_user="${_sed_user//&/\\&}"; _sed_user="${_sed_user//|/\\|}"
+sed -e "s|__MC_ROOT__|$_sed_root|g" -e "s|__MC_USER__|$_sed_user|g" \
   "$REPO_DIR/scripts/runtime/minecraft.service" > "/etc/systemd/system/${MC_SERVICE}.service"
 systemctl daemon-reload
 systemctl enable "$MC_SERVICE"

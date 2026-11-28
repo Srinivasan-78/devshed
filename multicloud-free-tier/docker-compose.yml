@@ -2,9 +2,9 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_USER: mcp
-      POSTGRES_PASSWORD: mcp
-      POSTGRES_DB: multicloud
+      POSTGRES_USER: ${POSTGRES_USER:-mcp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mcp}
+      POSTGRES_DB: ${POSTGRES_DB:-multicloud}
     ports:
       - "5432:5432"
     volumes:

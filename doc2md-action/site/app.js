@@ -136,29 +136,38 @@ async function convertPdf(file, cfg, result) {
   const zoom = cfg.ocrDpi / 72;
   const pages = [];
 
-  for (let index = 1; index <= doc.numPages; index += 1) {
-    const page = await doc.getPage(index);
-    const content = await page.getTextContent();
-    let text = joinTextItems(content.items).trim();
+  try {
+    for (let index = 1; index <= doc.numPages; index += 1) {
+      const page = await doc.getPage(index);
+      try {
+        const content = await page.getTextContent();
+        let text = joinTextItems(content.items).trim();
 
-    const needsOcr =
-      cfg.ocr === "always" || (cfg.ocr === "auto" && text.length < cfg.minCharsPerPage);
+        const needsOcr =
+          cfg.ocr === "always" || (cfg.ocr === "auto" && text.length < cfg.minCharsPerPage);
 
-    if (needsOcr) {
-      const canvas = await renderPage(page, zoom);
-      const ocrText = await ocrImage(canvas);
-      // Keep whichever extraction actually produced more content.
-      if (ocrText.length > text.length) {
-        text = ocrText;
-        result.ocrUsed = true;
+        if (needsOcr) {
+          const canvas = await renderPage(page, zoom);
+          try {
+            const ocrText = await ocrImage(canvas);
+            // Keep whichever extraction actually produced more content.
+            if (ocrText.length > text.length) {
+              text = ocrText;
+              result.ocrUsed = true;
+            }
+          } finally {
+            canvas.width = 0;
+            canvas.height = 0;
+          }
+        }
+        pages.push(text);
+      } finally {
+        page.cleanup();
       }
-      canvas.width = 0;
-      canvas.height = 0;
     }
-    pages.push(text);
-    page.cleanup();
+  } finally {
+    await doc.destroy();
   }
-  await doc.destroy();
 
   const cleaned = cfg.compact ? stripRepeatedLines(pages) : pages;
   return cleaned
@@ -243,12 +252,21 @@ function rowsToMarkdownTable(rows) {
   ].join("\n");
 }
 
-const turndown = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
+let _turndown = null;
+function getTurndown() {
+  if (!_turndown) {
+    if (typeof TurndownService === "undefined") {
+      throw new Error("HTML-to-Markdown library (turndown) failed to load from CDN.");
+    }
+    _turndown = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
+  }
+  return _turndown;
+}
 
 async function convertDocx(file) {
   const buffer = await file.arrayBuffer();
   const { value } = await mammoth.convertToHtml({ arrayBuffer: buffer });
-  return turndown.turndown(value);
+  return getTurndown().turndown(value);
 }
 
 async function convertPptx(file, cfg, result) {
@@ -281,7 +299,7 @@ function pptxSlideText(xml) {
 }
 
 async function convertHtml(file) {
-  return turndown.turndown(await file.text());
+  return getTurndown().turndown(await file.text());
 }
 
 async function convertFile(file, path, cfg, result) {
@@ -337,6 +355,15 @@ async function convertFile(file, path, cfg, result) {
 
 const SKIP_ENTRY = /(^|\/)(__MACOSX\/|\.DS_Store$|~\$|\._)/;
 
+const MAX_ZIP_UNCOMPRESSED_BYTES = 100 * 1024 * 1024;
+
+function sanitizeZipPath(entryPath) {
+  return entryPath
+    .split(/[\\/]/)
+    .filter((seg) => seg && seg !== "." && seg !== "..")
+    .join("/");
+}
+
 async function expandInputs(files) {
   const inputs = [];
   for (const file of files) {
@@ -348,12 +375,19 @@ async function expandInputs(files) {
     // One level only: a zip inside a zip is left alone rather than recursed into.
     const stem = basename(path).replace(/\.zip$/i, "");
     const zip = await JSZip.loadAsync(file);
+    let totalBytes = 0;
     for (const [entryPath, entry] of Object.entries(zip.files)) {
       if (entry.dir || SKIP_ENTRY.test(entryPath)) continue;
+      const safeRel = sanitizeZipPath(entryPath);
+      if (!safeRel) continue;
       const blob = await entry.async("blob");
+      totalBytes += blob.size;
+      if (totalBytes > MAX_ZIP_UNCOMPRESSED_BYTES) {
+        throw new Error(`zip archive ${basename(path)} exceeds ${MAX_ZIP_UNCOMPRESSED_BYTES / (1024 * 1024)} MB uncompressed limit`);
+      }
       inputs.push({
-        file: new File([blob], basename(entryPath)),
-        path: `${stem}/${entryPath}`,
+        file: new File([blob], basename(safeRel)),
+        path: `${stem}/${safeRel}`,
       });
     }
   }
@@ -365,11 +399,12 @@ async function expandInputs(files) {
 // ---------------------------------------------------------------------------
 
 function readConfig() {
+  const rawDpi = Number(document.getElementById("ocr-dpi").value);
   return {
     ocr: document.getElementById("ocr").value,
     ocrLang: document.getElementById("ocr-lang").value.trim() || "eng",
-    ocrDpi: Number(document.getElementById("ocr-dpi").value) || 200,
-    minCharsPerPage: Number(document.getElementById("min-chars").value) || 0,
+    ocrDpi: Number.isFinite(rawDpi) && rawDpi > 0 ? Math.min(Math.max(rawDpi, 72), 600) : 200,
+    minCharsPerPage: Math.max(0, Number(document.getElementById("min-chars").value) || 0),
     compact: document.getElementById("compact").checked,
   };
 }
@@ -503,6 +538,7 @@ function manifest() {
         converted: state.results.filter((r) => r.status === "converted").length,
         failed: state.results.filter((r) => r.status === "failed").length,
         empty: state.results.filter((r) => r.status === "empty").length,
+        skipped: 0,
         approx_tokens: tokens,
         source_bytes: written.reduce((sum, r) => sum + r.sourceBytes, 0),
         markdown_chars: written.reduce((sum, r) => sum + r.markdownChars, 0),
@@ -617,7 +653,7 @@ async function copyText(text, button) {
     else setStatus(`copied ${text.length.toLocaleString()} characters`);
   } catch (error) {
     if (button) flash(button, "Press Ctrl+C");
-    setStatus(`could not copy automatically: ${error.message}. The text is selected, press Ctrl+C.`);
+    setStatus(`could not copy automatically: ${error.message}. Please copy from the preview box.`);
   } finally {
     if (button) setTimeout(() => (button.textContent = label), 1500);
   }

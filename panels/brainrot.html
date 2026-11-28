@@ -31,7 +31,13 @@
 <body>
   <div class="ds-standalone-bar ds-standalone-only">
     <a href="../#brainrot">&larr; Back to DevShed</a>
-    <span>05 // STUDY BRAINROT GENERATOR</span>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <span>05 // STUDY BRAINROT GENERATOR</span>
+      <button id="theme-toggle" class="ds-btn" type="button" aria-label="Toggle color theme" style="padding:0.25rem 0.6rem;font-size:0.72rem">
+        <span class="theme-opt-light">&#9632; Dark</span>
+        <span class="theme-opt-dark">&#9633; Light</span>
+      </button>
+    </div>
   </div>
 
   <main class="ds-page">
@@ -65,6 +71,10 @@
         <input id="manual" type="checkbox" />
         Skip AI &amp; Wikipedia (validate a local <code>build/script.json</code> instead)
       </label>
+      <label class="check-row">
+        <input id="pwsh" type="checkbox" />
+        PowerShell syntax (Windows)
+      </label>
 
       <pre id="cmd" class="ds-pre"></pre>
 
@@ -77,9 +87,13 @@
   </main>
 
   <script>
+    document.getElementById("theme-toggle")?.addEventListener("click", () => {
+      if (window.DevShedTheme) window.DevShedTheme.toggleTheme();
+    });
     const topic = document.getElementById("topic");
     const bg = document.getElementById("bg");
     const manual = document.getElementById("manual");
+    const pwsh = document.getElementById("pwsh");
     const cmd = document.getElementById("cmd");
     const copyBtn = document.getElementById("copy-btn");
 
@@ -90,14 +104,26 @@
         "cd study-brainrot-generator",
         "pip install -r requirements.txt",
       ];
-      if (manual.checked) {
-        lines.push(`TOPIC="${t}" python scripts/script_gen.py --check`);
+      if (pwsh.checked) {
+        lines.push(`$env:TOPIC = "${t}"`);
+        if (manual.checked) {
+          lines.push("python scripts/script_gen.py --check");
+        } else {
+          lines.push("python scripts/research.py");
+          lines.push("python scripts/script_gen.py");
+        }
+        lines.push("python scripts/voice_gen.py");
+        lines.push(`$env:BACKGROUND_GROUP = "${g}"; python scripts/assemble.py`);
       } else {
-        lines.push(`TOPIC="${t}" python scripts/research.py`);
-        lines.push(`TOPIC="${t}" GEMINI_API_KEY="$GEMINI_API_KEY" python scripts/script_gen.py`);
+        if (manual.checked) {
+          lines.push(`TOPIC="${t}" python scripts/script_gen.py --check`);
+        } else {
+          lines.push(`TOPIC="${t}" python scripts/research.py`);
+          lines.push(`TOPIC="${t}" GEMINI_API_KEY="$GEMINI_API_KEY" python scripts/script_gen.py`);
+        }
+        lines.push("python scripts/voice_gen.py");
+        lines.push(`BACKGROUND_GROUP="${g}" python scripts/assemble.py`);
       }
-      lines.push("python scripts/voice_gen.py");
-      lines.push(`BACKGROUND_GROUP="${g}" python scripts/assemble.py`);
       lines.push("# Outputs: build/output_*.mp4");
       cmd.textContent = lines.join("\n");
     }
@@ -105,6 +131,7 @@
     topic.addEventListener("input", update);
     bg.addEventListener("change", update);
     manual.addEventListener("change", update);
+    pwsh.addEventListener("change", update);
     update();
 
     copyBtn.addEventListener("click", async () => {

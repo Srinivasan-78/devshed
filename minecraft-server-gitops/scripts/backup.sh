@@ -60,9 +60,11 @@ trap - EXIT
 # Non-fatal: the backup itself already succeeded, and failing here would stop
 # the workflow from ever seeing the ARCHIVE= line below.
 log "Pruning to the newest $MC_BACKUP_KEEP backups"
-{ ls -1t "$MC_BACKUP_DIR"/world-*.tar.gz 2>/dev/null \
-    | tail -n "+$((MC_BACKUP_KEEP + 1))" \
-    | xargs -r rm -f; } || log "warning: could not prune old backups"
+{ find "$MC_BACKUP_DIR" -maxdepth 1 -type f -name 'world-*.tar.gz' -printf '%T@ %p\0' \
+    | sort -z -rn \
+    | tail -z -n "+$((MC_BACKUP_KEEP + 1))" \
+    | sed -z 's/^[^ ]* //' \
+    | xargs -0 -r rm -f; } || log "warning: could not prune old backups"
 
 log "Backup complete: $archive ($(du -h "$archive" | cut -f1))"
 # Parsed by the backup workflow over SSH.

@@ -80,7 +80,7 @@ you. Nobody reading your repo can see them.
 
 **2. Put some background clips in `assets/`.**
 
-Any vertical `.mp4` or `.mov` files. Grab royalty-free ones from Pixabay or Pexels — satisfying
+Any vertical `.mp4` files. Grab royalty-free ones from Pixabay or Pexels — satisfying
 gameplay, soap cutting, marble runs, whatever keeps eyes on screen.
 
 Naming matters, because the name is how the Editor robot groups clips into a **series**:

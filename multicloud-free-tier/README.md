@@ -486,6 +486,6 @@ docker-compose.yml       postgres, web, worker, sweeper
 - **The demo security group opens SSH (port 22) to `0.0.0.0/0`.** Convenient
   for a portfolio demo, wrong for anything real — restrict the CIDR.
 - **Schema is applied, not migrated.** `db/schema.sql` runs idempotently on
-  start; `db/migrations/` is a manual trail, not a tool-managed history.
+  start; schema changes are applied directly in `db/schema.sql`.
 - **`ansible-lint` is advisory in CI** (non-blocking); `ruff` and `shellcheck`
   are blocking.

@@ -12,24 +12,35 @@ permissions:
 jobs:
   python-and-js:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7
         with:
           node-version: "22"
-      - name: Install test deps
-        run: python -m pip install pytest -r study-brainrot-generator/requirements.txt
-      - name: Run self-healing-deployment smoke tests
-        run: pytest -q self-healing-deployment/tests/test_smoke.py
-      - name: Run study-brainrot-generator smoke tests
-        run: pytest -q study-brainrot-generator/tests/test_smoke.py
+      - name: Install test & lint deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest httpx ruff \
+            -r browser-pdf-tools/requirements.txt \
+            -r doc2md-action/requirements.txt \
+            -r multicloud-free-tier/api/requirements.txt \
+            -r self-healing-deployment/app/requirements.txt \
+            -r study-brainrot-generator/requirements.txt
+      - name: Run Ruff checks
+        run: ruff check --select E9,F63,F7,F82 browser-pdf-tools doc2md-action/src multicloud-free-tier/api self-healing-deployment study-brainrot-generator/scripts
+      - name: Run pytest suite
+        run: pytest -q
       - name: Compile-check all Python files
         run: python -m compileall -q browser-pdf-tools doc2md-action/src multicloud-free-tier/api self-healing-deployment study-brainrot-generator/scripts
+      - name: Validate JSON files
+        run: python -c "import glob, json; [json.load(open(f, encoding='utf-8')) for f in glob.glob('**/*.json', recursive=True)]"
       - name: Syntax-check JS files
         run: |
+          node --check shared/devshed-theme.js
           node --check browser-pdf-tools/app.js
           node --check doc2md-action/site/app.js
           node --check multicloud-free-tier/api/app/static/app.js

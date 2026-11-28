@@ -1,7 +1,8 @@
 """
 PDF Tools backend — real text editing via PyMuPDF (MuPDF core).
 
-Two endpoints:
+Endpoints:
+  GET  /health            -> liveness check
   POST /api/inspect       -> extract real text spans (position, font, size, color) for a page
   POST /api/apply-edits   -> redact original spans and redraw replacements, reusing the
                               PDF's actual embedded font where possible; falls back to a
@@ -12,15 +13,11 @@ Two endpoints:
 Run:
     pip install -r requirements.txt
     uvicorn main:app --host 0.0.0.0 --port 8000
-
-This must run on a real persistent host (your own machine, a VPS, Fly.io, Render, etc.).
-It is NOT a GitHub Actions job — a self-hosted Actions runner only executes on CI
-triggers, it can't serve HTTP requests, and putting a repo-write token in client-side
-JS to trigger one would leak that token to anyone visiting the page.
 """
 
 import io
 import json
+import os
 
 import pymupdf
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -29,13 +26,15 @@ from fastapi.responses import StreamingResponse
 
 app = FastAPI(title="PDF Tools backend")
 
-# Restrict allow_origins to your actual GitHub Pages origin in production,
-# e.g. ["https://<username>.github.io"]
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(50 * 1024 * 1024)))
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
@@ -71,12 +70,19 @@ def pick_fallback_font(flags: int) -> str:
     return FALLBACK_FONTS.get((bold, italic, serif, mono), "Helvetica")
 
 
-def open_pdf(data: bytes):
-    """Open an upload, or answer 400 saying why.
+async def read_upload_bounded(file: UploadFile) -> bytes:
+    """Read an uploaded file while enforcing MAX_UPLOAD_BYTES."""
+    data = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"uploaded file exceeds {MAX_UPLOAD_BYTES} byte limit",
+        )
+    return data
 
-    Without this a corrupt or non-PDF upload surfaces as a bare 500, which
-    reads as "the server is broken" rather than "that file is not a PDF".
-    """
+
+def open_pdf(data: bytes):
+    """Open an upload, or answer 400 saying why."""
     if not data:
         raise HTTPException(status_code=400, detail="no file content received")
     try:
@@ -86,12 +92,7 @@ def open_pdf(data: bytes):
 
 
 def parse_edits(edits: str):
-    """Validate the edits form field before any of it is trusted.
-
-    Every key read later -- page, bbox -- is checked here, so a malformed
-    request fails with a description of what is wrong instead of a KeyError
-    or an IndexError halfway through mutating the document.
-    """
+    """Validate the edits form field before any of it is trusted."""
     try:
         edit_list = json.loads(edits)
     except json.JSONDecodeError as exc:
@@ -112,129 +113,152 @@ def parse_edits(edits: str):
             raise HTTPException(status_code=400, detail=f"edits[{i}].bbox must be four numbers")
         if not isinstance(e.get("newText"), str):
             raise HTTPException(status_code=400, detail=f"edits[{i}].newText must be a string")
+        if "size" in e:
+            size = e["size"]
+            if not isinstance(size, (int, float)) or isinstance(size, bool) or not (0 < size <= 1000):
+                raise HTTPException(status_code=400, detail=f"edits[{i}].size must be a number in (0, 1000]")
+        if "flags" in e:
+            flags = e["flags"]
+            if not isinstance(flags, int) or isinstance(flags, bool):
+                raise HTTPException(status_code=400, detail=f"edits[{i}].flags must be an integer")
+        if "font" in e and not isinstance(e["font"], str):
+            raise HTTPException(status_code=400, detail=f"edits[{i}].font must be a string")
+        if "color" in e:
+            color = e["color"]
+            if (
+                not isinstance(color, (list, tuple))
+                or len(color) != 3
+                or not all(isinstance(c, (int, float)) and not isinstance(c, bool) and 0 <= c <= 255 for c in color)
+            ):
+                raise HTTPException(status_code=400, detail=f"edits[{i}].color must be three numbers in [0, 255]")
 
     return edit_list
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/api/inspect")
 async def inspect(file: UploadFile = File(...), page: int = Form(...)):
-    data = await file.read()
+    data = await read_upload_bounded(file)
     doc = open_pdf(data)
-    if not 0 <= page < doc.page_count:
+    try:
+        if not 0 <= page < doc.page_count:
+            raise HTTPException(
+                status_code=400,
+                detail=f"page {page} out of range: this document has {doc.page_count} pages",
+            )
+        pg = doc[page]
+        rect = pg.rect
+        raw = pg.get_text("dict")
+
+        spans = []
+        sid = 0
+        for block in raw.get("blocks", []):
+            if block.get("type") != 0:  # 0 = text block
+                continue
+            for line in block.get("lines", []):
+                for span in line.get("spans", []):
+                    text = span.get("text", "")
+                    if not text.strip():
+                        continue
+                    color_int = span.get("color", 0)
+                    r = (color_int >> 16) & 255
+                    g = (color_int >> 8) & 255
+                    b = color_int & 255
+                    spans.append({
+                        "id": sid,
+                        "bbox": list(span["bbox"]),
+                        "text": text,
+                        "font": span.get("font", ""),
+                        "size": span.get("size", 12),
+                        "flags": span.get("flags", 0),
+                        "color": [r, g, b],
+                    })
+                    sid += 1
+
+        return {"width": rect.width, "height": rect.height, "spans": spans}
+    finally:
         doc.close()
-        raise HTTPException(
-            status_code=400,
-            detail=f"page {page} out of range: this document has {doc.page_count} pages",
-        )
-    pg = doc[page]
-    rect = pg.rect
-    raw = pg.get_text("dict")
-
-    spans = []
-    sid = 0
-    for block in raw.get("blocks", []):
-        if block.get("type") != 0:  # 0 = text block
-            continue
-        for line in block.get("lines", []):
-            for span in line.get("spans", []):
-                text = span.get("text", "")
-                if not text.strip():
-                    continue
-                color_int = span.get("color", 0)
-                r = (color_int >> 16) & 255
-                g = (color_int >> 8) & 255
-                b = color_int & 255
-                spans.append({
-                    "id": sid,
-                    "bbox": list(span["bbox"]),
-                    "text": text,
-                    "font": span.get("font", ""),
-                    "size": span.get("size", 12),
-                    "flags": span.get("flags", 0),
-                    "color": [r, g, b],
-                })
-                sid += 1
-
-    doc.close()
-    return {"width": rect.width, "height": rect.height, "spans": spans}
 
 
 @app.post("/api/apply-edits")
 async def apply_edits(file: UploadFile = File(...), edits: str = Form(...)):
-    data = await file.read()
+    data = await read_upload_bounded(file)
     edit_list = parse_edits(edits)
     doc = open_pdf(data)
+    try:
+        by_page = {}
+        for e in edit_list:
+            page_num = e["page"]
+            if not 0 <= page_num < doc.page_count:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"edit targets page {page_num}, but this document has {doc.page_count} pages",
+                )
+            by_page.setdefault(page_num, []).append(e)
 
-    by_page = {}
-    for e in edit_list:
-        page_num = e["page"]
-        if not 0 <= page_num < doc.page_count:
-            doc.close()
-            raise HTTPException(
-                status_code=400,
-                detail=f"edit targets page {page_num}, but this document has {doc.page_count} pages",
-            )
-        by_page.setdefault(page_num, []).append(e)
+        for page_num, page_edits in by_page.items():
+            pg = doc[page_num]
 
-    for page_num, page_edits in by_page.items():
-        pg = doc[page_num]
+            font_cache = {}
+            page_fonts = {f[3]: f[0] for f in pg.get_fonts(full=False)}  # basefont -> xref
 
-        # basefont name -> font alias already embedded on this page, so we
-        # only extract/embed each distinct font once even if reused by
-        # several edited spans
-        font_cache = {}
-        page_fonts = {f[3]: f[0] for f in pg.get_fonts(full=False)}  # basefont -> xref
+            for e in page_edits:
+                rect = pymupdf.Rect(e["bbox"])
+                rect.x0 -= 1
+                rect.x1 += 1
+                rect.y0 -= 1
+                rect.y1 += 2
+                pg.add_redact_annot(rect, fill=(1, 1, 1))
+            pg.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE)
 
-        # Step 1: redact the original spans (removes the underlying content,
-        # not just a white paint-over)
-        for e in page_edits:
-            rect = pymupdf.Rect(e["bbox"])
-            rect.x0 -= 1
-            rect.x1 += 1
-            rect.y0 -= 1
-            rect.y1 += 2
-            pg.add_redact_annot(rect, fill=(1, 1, 1))
-        pg.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE)
+            for e in page_edits:
+                basefont = e.get("font", "")
+                fontname = font_cache.get(basefont)
 
-        # Step 2: redraw replacement text, reusing the original embedded
-        # font whenever it can be extracted
-        for e in page_edits:
-            basefont = e.get("font", "")
-            fontname = font_cache.get(basefont)
+                if not fontname and basefont in page_fonts:
+                    try:
+                        xref = page_fonts[basefont]
+                        extracted = doc.extract_font(xref)
+                        fontbuffer = extracted[3]
+                        if fontbuffer:
+                            alias = f"F_{xref}"
+                            pg.insert_font(fontname=alias, fontbuffer=fontbuffer)
+                            font_cache[basefont] = alias
+                            fontname = alias
+                    except Exception:
+                        fontname = None
 
-            if not fontname and basefont in page_fonts:
+                if not fontname:
+                    fontname = pick_fallback_font(e.get("flags", 0))
+
+                color = tuple(c / 255 for c in e.get("color", [0, 0, 0]))
+                x0, y0, x1, y1 = e["bbox"]
+                size = e.get("size", 12)
+                baseline_y = y1 - size * 0.2
+
                 try:
-                    xref = page_fonts[basefont]
-                    extracted = doc.extract_font(xref)
-                    fontbuffer = extracted[3]
-                    if fontbuffer:
-                        alias = f"F_{xref}"
-                        pg.insert_font(fontname=alias, fontbuffer=fontbuffer)
-                        font_cache[basefont] = alias
-                        fontname = alias
+                    pg.insert_text((x0, baseline_y), e["newText"], fontsize=size, fontname=fontname, color=color)
                 except Exception:
-                    fontname = None
+                    fallback = pick_fallback_font(e.get("flags", 0))
+                    try:
+                        pg.insert_text((x0, baseline_y), e["newText"], fontsize=size, fontname=fallback, color=color)
+                    except Exception as exc:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"could not render replacement text on page {page_num}: {exc}",
+                        ) from exc
 
-            if not fontname:
-                fontname = pick_fallback_font(e.get("flags", 0))
-
-            color = tuple(c / 255 for c in e.get("color", [0, 0, 0]))
-            x0, y0, x1, y1 = e["bbox"]
-            size = e.get("size", 12)
-            baseline_y = y1 - size * 0.2  # approximate baseline from the bbox bottom
-
-            try:
-                pg.insert_text((x0, baseline_y), e["newText"], fontsize=size, fontname=fontname, color=color)
-            except Exception:
-                fallback = pick_fallback_font(e.get("flags", 0))
-                pg.insert_text((x0, baseline_y), e["newText"], fontsize=size, fontname=fallback, color=color)
-
-    out = io.BytesIO()
-    doc.save(out)
-    doc.close()
-    out.seek(0)
-    return StreamingResponse(
-        out,
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=edited.pdf"},
-    )
+        out = io.BytesIO()
+        doc.save(out)
+        out.seek(0)
+        return StreamingResponse(
+            out,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=edited.pdf"},
+        )
+    finally:
+        doc.close()
