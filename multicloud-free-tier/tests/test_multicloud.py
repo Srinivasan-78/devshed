@@ -14,7 +14,7 @@ from app.free_tier import (  # noqa: E402
     IMPLEMENTED_PROVIDERS,
     SUPPORTED_PROVIDERS,
     normalize_provider,
-    validate_spec,
+    validate_request,
 )
 
 
@@ -25,7 +25,7 @@ def test_free_tier_allowlist():
     assert "azure" in SUPPORTED_PROVIDERS
     assert "oracle" in SUPPORTED_PROVIDERS
 
-    spec = validate_spec("aws")
+    spec = validate_request("aws", "compute")
     assert spec["instance_type"] == "t3.micro"
     assert spec["region"] == "us-east-1"
 
