@@ -4,6 +4,7 @@ from pathlib import Path
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-unit-tests")
 os.environ.setdefault("FERNET_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost:5432/test")
 
 API_ROOT = Path(__file__).resolve().parents[1] / "api"
 sys.path.insert(0, str(API_ROOT))
