@@ -30,7 +30,10 @@ def test_free_tier_allowlist():
     assert spec["region"] == "us-east-1"
 
 
-def test_app_health_and_login_validation():
+def test_app_health_and_login_validation(monkeypatch):
+    import psycopg2.pool
+
+    monkeypatch.setattr(psycopg2.pool, "ThreadedConnectionPool", lambda *a, **kw: object())
     app = create_app()
     client = app.test_client()
 

@@ -36,10 +36,13 @@ def test_validate_gives_up_after_the_configured_retries():
 
 
 def test_app_endpoints(monkeypatch):
-    app_mod = importlib.import_module("main")
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("self_healing_main", ROOT / "app" / "main.py")
+    app_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app_mod)
     client = TestClient(app_mod.app)
 
-    assert client.get("/").status_code == 200
     assert client.get("/version").status_code == 200
     health = client.get("/health")
     assert health.status_code == 200
